@@ -50,6 +50,7 @@ try:
 except ImportError:
     get_inner_language_processor = None
 
+
 class CognitiveMode(Enum):
     """Tryby pracy systemu kognitywnego"""
     BASIC = "basic"                    # Tylko podstawowe przetwarzanie
@@ -58,6 +59,7 @@ class CognitiveMode(Enum):
     PREDICTIVE = "predictive"          # Z predykcją przyszłości
     MULTI_AGENT = "multi_agent"        # Z orkiestracją agentów
     FULL_COGNITIVE = "full_cognitive"  # Wszystkie systemy aktywne
+
 
 class ProcessingStage(Enum):
     """Etapy przetwarzania kognitywnego"""
@@ -70,6 +72,7 @@ class ProcessingStage(Enum):
     SELF_REFLECTION = "self_reflection"
     FUTURE_PREDICTION = "future_prediction"
     OUTPUT_SYNTHESIS = "output_synthesis"
+
 
 @dataclass
 class CognitiveResult:
@@ -84,6 +87,7 @@ class CognitiveResult:
     confidence_score: float
     originality_score: float
     total_processing_time: float
+
 
 class AdvancedCognitiveEngine:
     """
@@ -140,22 +144,10 @@ class AdvancedCognitiveEngine:
     ) -> CognitiveResult:
         """
         Główna funkcja przetwarzania wiadomości przez wszystkie systemy kognitywne
-        
-        Args:
-            user_message: Wiadomość użytkownika
-            user_id: ID użytkownika
-            conversation_context: Kontekst konwersacji
-            cognitive_mode: Tryb pracy kognitywnej
-            enable_prediction: Czy włączyć predykcję przyszłości
-            reflection_depth: Głębokość refleksji
-            custom_agents: Niestandardowi agenci
-            
-        Returns:
-            CognitiveResult: Kompleksowy wynik przetwarzania
         """
         
         start_time = time.time()
-        processing_metrics = {}
+        processing_metrics: Dict[str, float] = {}
         
         try:
             # Ustaw domyślny tryb
@@ -178,27 +170,32 @@ class AdvancedCognitiveEngine:
             
             # ETAP 3: Sprawdź predykcje z cache (jeśli włączone)
             prediction_hit = None
-            if enable_prediction and cognitive_mode in [CognitiveMode.PREDICTIVE, CognitiveMode.FULL_COGNITIVE]:
+            if (
+                enable_prediction 
+                and cognitive_mode in [CognitiveMode.PREDICTIVE, CognitiveMode.FULL_COGNITIVE]
+                and self.future_predictor is not None
+            ):
                 prediction_hit = await self.future_predictor.check_prediction_hit(user_id, user_message)
                 if prediction_hit:
                     log_info("[COGNITIVE_ENGINE] 🎯 PREDICTION HIT - używam przygotowanej odpowiedzi")
             
             # ETAP 4: Generacja odpowiedzi (podstawowa lub z cache)
             stage_start = time.time()
-            if prediction_hit and prediction_hit.preparation_confidence > 0.7:
-                # Użyj przygotowanej odpowiedzi
+            if prediction_hit and getattr(prediction_hit, "preparation_confidence", 0) > 0.7:
                 primary_response = prediction_hit.prepared_content
                 processing_metrics["response_generation_time"] = 0.01  # Cache hit
             else:
-                # Generuj nową odpowiedź
                 primary_response = await self._generate_enhanced_response(
                     user_message, memory_context, compressed_knowledge, inner_thought, cognitive_mode
                 )
                 processing_metrics["response_generation_time"] = time.time() - stage_start
             
             # ETAP 5: Wieloagentowa analiza (jeśli włączona)
-            agent_perspectives = []
-            if cognitive_mode in [CognitiveMode.MULTI_AGENT, CognitiveMode.FULL_COGNITIVE]:
+            agent_perspectives: List[Dict[str, Any]] = []
+            if (
+                cognitive_mode in [CognitiveMode.MULTI_AGENT, CognitiveMode.FULL_COGNITIVE]
+                and self.multi_agent is not None
+            ):
                 stage_start = time.time()
                 agent_perspectives = await self._orchestrate_multi_agent_analysis(
                     user_message, primary_response, conversation_context, custom_agents
@@ -206,38 +203,46 @@ class AdvancedCognitiveEngine:
                 processing_metrics["multi_agent_time"] = time.time() - stage_start
             
             # ETAP 6: Self-reflection i poprawa (jeśli włączona)
-            reflection_insights = []
+            reflection_insights: List[Dict[str, Any]] = []
             final_response = primary_response
             
-            if cognitive_mode in [CognitiveMode.ENHANCED, CognitiveMode.ADVANCED, CognitiveMode.FULL_COGNITIVE]:
+            if (
+                cognitive_mode in [CognitiveMode.ENHANCED, CognitiveMode.ADVANCED, CognitiveMode.FULL_COGNITIVE]
+                and self.self_reflection is not None
+            ):
                 stage_start = time.time()
                 
                 # Adaptacyjna głębokość refleksji
-                if reflection_depth is None:
-                    reflection_depth = await self._determine_reflection_depth(
-                        user_message, primary_response, cognitive_mode
+                if ReflectionDepth is not None:
+                    if reflection_depth is None:
+                        reflection_depth = await self._determine_reflection_depth(
+                            user_message, primary_response, cognitive_mode
+                        )
+                    
+                    reflection_result = await self.self_reflection.reflect_on_response(
+                        original_query=user_message,
+                        initial_response=primary_response,
+                        context=conversation_context or [],
+                        depth=reflection_depth,
+                        agent_feedback=agent_perspectives
                     )
-                
-                reflection_result = await self.self_reflection.reflect_on_response(
-                    original_query=user_message,
-                    initial_response=primary_response,
-                    context=conversation_context or [],
-                    depth=reflection_depth,
-                    agent_feedback=agent_perspectives
-                )
-                
-                reflection_insights = reflection_result.get("insights", [])
-                improved_response = reflection_result.get("improved_response")
-                
-                if improved_response and len(improved_response) > len(primary_response) * 0.8:
-                    final_response = improved_response
-                    self.processing_stats["reflection_improvements"] += 1
+                    
+                    reflection_insights = reflection_result.get("insights", [])
+                    improved_response = reflection_result.get("improved_response")
+                    
+                    if improved_response and len(improved_response) > len(primary_response) * 0.8:
+                        final_response = improved_response
+                        self.processing_stats["reflection_improvements"] += 1
                 
                 processing_metrics["reflection_time"] = time.time() - stage_start
             
             # ETAP 7: Predykcja przyszłych zapytań (jeśli włączona)
-            future_predictions = []
-            if enable_prediction and cognitive_mode in [CognitiveMode.PREDICTIVE, CognitiveMode.FULL_COGNITIVE]:
+            future_predictions: List[Dict[str, Any]] = []
+            if (
+                enable_prediction 
+                and cognitive_mode in [CognitiveMode.PREDICTIVE, CognitiveMode.FULL_COGNITIVE]
+                and self.future_predictor is not None
+            ):
                 stage_start = time.time()
                 future_predictions = await self._generate_future_predictions(
                     user_id, user_message, conversation_context
@@ -267,10 +272,10 @@ class AdvancedCognitiveEngine:
                 future_predictions=future_predictions,
                 compressed_knowledge=compressed_knowledge,
                 inner_thought={
-                    "token_chain": inner_thought.token_chain if inner_thought else [],
-                    "compression_level": getattr(inner_thought, 'compression_level', 0) if inner_thought else 0.0,
-                    "confidence": getattr(inner_thought, 'confidence', 0.5) if inner_thought else 0.5,
-                    "originality": getattr(inner_thought, 'originality', 0.5) if inner_thought else 0.5
+                    "token_chain": getattr(inner_thought, "token_chain", []) if inner_thought else [],
+                    "compression_level": getattr(inner_thought, "compression_level", 0.0) if inner_thought else 0.0,
+                    "confidence": getattr(inner_thought, "confidence", 0.5) if inner_thought else 0.5,
+                    "originality": getattr(inner_thought, "originality", 0.5) if inner_thought else 0.5,
                 },
                 processing_metrics=processing_metrics,
                 confidence_score=confidence_score,
@@ -328,7 +333,6 @@ class AdvancedCognitiveEngine:
         
         # Kompresja i synteza wiedzy
         if len(memory_results) > 3 and self.knowledge_compressor:
-            # Przygotuj konwersacje do kompresji
             conversations = []
             for result in memory_results:
                 if result.get("conversation_context"):
@@ -339,12 +343,10 @@ class AdvancedCognitiveEngine:
                     })
             
             try:
-                # Skompresuj wiedzę
                 compressed_knowledge = await self.knowledge_compressor.compress_conversations(
                     conversations, user_id
                 )
                 
-                # Synteza nowej wiedzy
                 if len(conversations) > 1:
                     synthesized = await self.knowledge_compressor.synthesize_new_knowledge(
                         compressed_knowledge.get("knowledge_vectors", []),
@@ -353,9 +355,8 @@ class AdvancedCognitiveEngine:
                     )
                     compressed_knowledge.update(synthesized)
             except Exception as e:
-                print(f"[WARN] Knowledge compression failed: {e}")
+                log_warning(f"[COGNITIVE_ENGINE] Knowledge compression failed: {e}")
                 compressed_knowledge = {}
-        
         else:
             compressed_knowledge = {}
         
@@ -371,12 +372,13 @@ class AdvancedCognitiveEngine:
     ) -> str:
         """Generuj ulepszoną odpowiedź z pełnym kontekstem"""
         
-        # Przygotuj kontekst dla LLM
-        context_elements = []
+        context_elements: List[str] = []
         
         # Dodaj compressed knowledge
         if compressed_knowledge.get("compressed_themes"):
-            context_elements.append(f"Skompresowane tematy: {', '.join(compressed_knowledge['compressed_themes'][:5])}")
+            context_elements.append(
+                f"Skompresowane tematy: {', '.join(compressed_knowledge['compressed_themes'][:5])}"
+            )
         
         if compressed_knowledge.get("thinking_patterns"):
             patterns = compressed_knowledge["thinking_patterns"]
@@ -385,9 +387,13 @@ class AdvancedCognitiveEngine:
         
         # Dodaj inner language insights
         if inner_thought:
-            compression = getattr(inner_thought, 'compression_level', 0)
-            context_elements.append(f"Kompresja myśli: {compression:.2f}")
-            if getattr(inner_thought, 'confidence', 0.5) > 0.7:
+            compression = getattr(inner_thought, "compression_level", 0.0)
+            try:
+                context_elements.append(f"Kompresja myśli: {float(compression):.2f}")
+            except Exception:
+                context_elements.append("Kompresja myśli: N/D")
+            
+            if getattr(inner_thought, "confidence", 0.5) > 0.7:
                 context_elements.append("Wysoka pewność interpretacji")
         
         # Dodaj memory context (skrócony)
@@ -396,39 +402,70 @@ class AdvancedCognitiveEngine:
             context_elements.append(f"Pamięć kontekstowa: {'; '.join(relevant_memories)}")
         
         enhanced_prompt = f"""
-        Odpowiedz na zapytanie użytkownika, wykorzystując dostępny kontekst:
+Odpowiedz na zapytanie użytkownika, wykorzystując dostępny kontekst.
+
+ZAPYTANIE: {user_message}
+
+KONTEKST KOGNITYWNY:
+{chr(10).join(f"- {element}" for element in context_elements)}
+
+TRYB PRZETWARZANIA: {cognitive_mode.value}
+
+Wytyczne odpowiedzi:
+1. Wykorzystaj wszystkie dostępne informacje kontekstowe.
+2. Dostosuj szczegółowość do trybu kognitywnego.
+3. Zachowaj naturalność i płynność odpowiedzi.
+4. Bądź konkretny i praktyczny.
+
+Odpowiedź:
+""".strip()
         
-        ZAPYTANIE: {user_message}
-        
-        KONTEKST KOGNITYWNY:
-        {chr(10).join(f"- {element}" for element in context_elements)}
-        
-        TRYB PRZETWARZANIA: {cognitive_mode.value}
-        
-        Wytyczne odpowiedzi:
-        1. Wykorzystaj wszystkie dostępne informacje kontekstowe
-        2. Dostosuj szczegółowość do trybu kognitywnego
-        3. Zachowaj naturalność i płynność odpowiedzi
-        4. Włącz insights z analizy kognitywnej gdzie to stosowne
-        5. Bądź konkretny i praktyczny
-        
-        Odpowiedź:
-        """
+        system_msg = (
+            f"Jesteś zaawansowanym asystentem AI z możliwościami kognitywnego przetwarzania "
+            f"w trybie {cognitive_mode.value}. Wykorzystujesz kontekst z pamięci, kompresji wiedzy "
+            f"i analizy wewnętrznego języka. Odpowiadasz po polsku."
+        )
         
         try:
-            response = await self.llm_client.chat_completion([{
-                "role": "system",
-                "content": f"Jesteś zaawansowanym asystentem AI z możliwościami kognitywnego przetwarzania w trybie {cognitive_mode.value}. Wykorzystujesz kontekst z pamięci, kompresji wiedzy i analizy wewnętrznego języka."
-            }, {
-                "role": "user",
-                "content": enhanced_prompt
-            }])
+            # Spróbuj użyć klienta LLM z metodą chat_completion
+            if self.llm_client is None or not hasattr(self.llm_client, "chat_completion"):
+                raise RuntimeError("LLM client nie ma metody chat_completion")
+            
+            messages = [
+                {"role": "system", "content": system_msg},
+                {"role": "user", "content": enhanced_prompt},
+            ]
+            
+            chat_fn = self.llm_client.chat_completion
+            
+            # Jeśli to funkcja asynchroniczna
+            if asyncio.iscoroutinefunction(chat_fn):
+                response = await chat_fn(messages)
+            else:
+                # Synchroniczna – odpal w executorze, żeby nie blokować event loopa
+                loop = asyncio.get_running_loop()
+                response = await loop.run_in_executor(None, chat_fn, messages)
             
             return response
-            
+        
         except Exception as e:
-            log_error(f"[COGNITIVE_ENGINE] Błąd generacji odpowiedzi: {e}")
-            return f"Przepraszam, wystąpił błąd podczas przetwarzania Twojego zapytania: {user_message}"
+            log_error(f"[COGNITIVE_ENGINE] Błąd generacji odpowiedzi z llm_client: {e} – fallback do call_llm")
+            # Fallback: klasyczny call_llm, który wiemy, że działa
+            try:
+                from .llm import call_llm
+                
+                fallback_response = call_llm(
+                    prompt=enhanced_prompt,
+                    system_prompt=system_msg,
+                    max_tokens=800
+                )
+                return fallback_response
+            except Exception as inner_e:
+                log_error(f"[COGNITIVE_ENGINE] Fallback call_llm też się wywalił: {inner_e}")
+                return (
+                    "Przepraszam, wystąpił błąd podczas przetwarzania Twojego zapytania. "
+                    f"Treść zapytania: {user_message}"
+                )
     
     async def _orchestrate_multi_agent_analysis(
         self,
@@ -439,6 +476,9 @@ class AdvancedCognitiveEngine:
     ) -> List[Dict[str, Any]]:
         """Orkiestruj analizę wieloagentową"""
         
+        if self.multi_agent is None:
+            return []
+        
         try:
             result = await self.multi_agent.orchestrate_multi_agent_response(
                 user_query=user_message,
@@ -446,9 +486,7 @@ class AdvancedCognitiveEngine:
                 conversation_context=conversation_context or [],
                 custom_agents=custom_agents
             )
-            
             return result.get("agent_responses", [])
-            
         except Exception as e:
             log_error(f"[COGNITIVE_ENGINE] Błąd analizy wieloagentowej: {e}")
             return []
@@ -458,25 +496,24 @@ class AdvancedCognitiveEngine:
         user_message: str,
         primary_response: str,
         cognitive_mode: CognitiveMode
-    ) -> ReflectionDepth:
+    ):
         """Określ adaptacyjną głębokość refleksji"""
         
-        # Bazowa głębokość według trybu
+        if ReflectionDepth is None:
+            return None
+        
         base_depths = {
             CognitiveMode.BASIC: ReflectionDepth.SURFACE,
             CognitiveMode.ENHANCED: ReflectionDepth.MEDIUM,
             CognitiveMode.ADVANCED: ReflectionDepth.DEEP,
             CognitiveMode.PREDICTIVE: ReflectionDepth.DEEP,
             CognitiveMode.MULTI_AGENT: ReflectionDepth.PROFOUND,
-            CognitiveMode.FULL_COGNITIVE: ReflectionDepth.TRANSCENDENT
+            CognitiveMode.FULL_COGNITIVE: ReflectionDepth.TRANSCENDENT,
         }
         
         base_depth = base_depths.get(cognitive_mode, ReflectionDepth.MEDIUM)
-        
-        # Modyfikatory głębokości
         depth_modifiers = 0
         
-        # Złożoność zapytania
         if len(user_message) > 100:
             depth_modifiers += 1
         if "?" in user_message:
@@ -484,20 +521,15 @@ class AdvancedCognitiveEngine:
         if any(word in user_message.lower() for word in ["dlaczego", "jak", "w jaki sposób", "wyjaśnij"]):
             depth_modifiers += 1
         
-        # Długość odpowiedzi
         if len(primary_response) > 500:
             depth_modifiers += 1
         
-        # Słowa kluczowe wymagające głębokiej refleksji
         deep_keywords = ["etyka", "filozofia", "moralność", "znaczenie", "sens", "wartości", "przekonania"]
         if any(keyword in user_message.lower() for keyword in deep_keywords):
             depth_modifiers += 2
         
-        # Mapuj modyfikatory na poziomy głębokości
         depth_levels = list(ReflectionDepth)
         current_index = depth_levels.index(base_depth)
-        
-        # Zwiększ głębokość w oparciu o modyfikatory
         new_index = min(current_index + depth_modifiers, len(depth_levels) - 1)
         
         return depth_levels[new_index]
@@ -510,19 +542,19 @@ class AdvancedCognitiveEngine:
     ) -> List[Dict[str, Any]]:
         """Generuj predykcje przyszłych zapytań"""
         
+        if self.future_predictor is None or PredictionHorizon is None:
+            return []
+        
         try:
-            # Predykcje natychmiastowe
             immediate_predictions = await self.future_predictor.predict_user_intentions(
                 user_id, user_message, conversation_context, PredictionHorizon.IMMEDIATE
             )
             
-            # Predykcje krótkoterminowe
             short_term_predictions = await self.future_predictor.predict_user_intentions(
                 user_id, user_message, conversation_context, PredictionHorizon.SHORT_TERM
             )
             
-            # Kombinuj i formatuj
-            all_predictions = []
+            all_predictions: List[Dict[str, Any]] = []
             
             for prediction in immediate_predictions[:3]:
                 all_predictions.append({
@@ -557,25 +589,21 @@ class AdvancedCognitiveEngine:
         
         confidence = 0.0
         
-        # Bazowa pewność z długości odpowiedzi
         if len(final_response) > 100:
             confidence += 0.3
         
-        # Bonus za refleksje
         if reflection_insights:
             reflection_confidence = sum(
                 insight.get("confidence", 0.5) for insight in reflection_insights
             ) / len(reflection_insights)
             confidence += reflection_confidence * 0.3
         
-        # Bonus za konsensus agentów
         if agent_perspectives:
             agent_confidence = sum(
                 perspective.get("confidence", 0.5) for perspective in agent_perspectives
             ) / len(agent_perspectives)
             confidence += agent_confidence * 0.2
         
-        # Bonus za compressed knowledge
         if compressed_knowledge.get("knowledge_vectors"):
             confidence += 0.2
         
@@ -591,15 +619,12 @@ class AdvancedCognitiveEngine:
         
         originality = 0.0
         
-        # Oryginalność z inner language
-        if inner_thought:
-            originality += inner_thought.originality * 0.4
+        if inner_thought and hasattr(inner_thought, "originality"):
+            originality += getattr(inner_thought, "originality", 0.0) * 0.4
         
-        # Oryginalność z syntezy wiedzy
         if compressed_knowledge.get("synthetic_memories"):
             originality += 0.3
         
-        # Różnorodność perspektyw agentów
         if len(agent_perspectives) > 3:
             originality += 0.3
         
@@ -615,33 +640,35 @@ class AdvancedCognitiveEngine:
         
         self.processing_stats["total_requests"] += 1
         
-        # Średni czas przetwarzania
         current_avg = self.processing_stats["avg_processing_time"]
         total_requests = self.processing_stats["total_requests"]
         self.processing_stats["avg_processing_time"] = (
             (current_avg * (total_requests - 1) + processing_time) / total_requests
         )
         
-        # Aktualizuj inne metryki
         if predictions_count > 0:
             self.processing_stats["prediction_accuracy"] = (
                 self.processing_stats["prediction_accuracy"] * 0.9 + confidence_score * 0.1
             )
     
     async def _create_fallback_result(self, user_message: str) -> CognitiveResult:
-        """Stwórz podstawowy wynik w przypadku błędu - używa plain LLM"""
+        """Stwórz podstawowy wynik w przypadku grubszego błędu - używa plain LLM"""
         
-        # Spróbuj uzyskać odpowiedź z plain LLM
         try:
             from .llm import call_llm
             fallback_response = call_llm(
                 prompt=user_message,
-                system_prompt="Jesteś pomocnym asystentem AI. Odpowiadaj po polsku, naturalnie i konkretnie.",
+                system_prompt=(
+                    "Jesteś pomocnym asystentem AI. Odpowiadaj po polsku, naturalnie i konkretnie."
+                ),
                 max_tokens=500
             )
         except Exception as llm_error:
             log_warning(f"[COGNITIVE_ENGINE] Fallback LLM failed: {llm_error}")
-            fallback_response = f"Nie udało się przetworzyć zapytania. Spróbuj ponownie."
+            fallback_response = (
+                "Nie udało się przetworzyć zapytania. Spróbuj ponownie za chwilę. "
+                f"Treść zapytania: {user_message}"
+            )
         
         return CognitiveResult(
             primary_response=fallback_response,
@@ -660,28 +687,49 @@ class AdvancedCognitiveEngine:
         """Pobierz status wszystkich systemów kognitywnych"""
         
         try:
-            # Zbierz raporty z wszystkich systemów
-            tasks = [
-                self.self_reflection.get_reflection_report(),
-                self.knowledge_compressor.get_compression_report(),
-                self.multi_agent.get_orchestration_report(),
-                self.future_predictor.get_prediction_report(),
-                self.inner_language.get_inner_language_report()
-            ]
+            tasks = []
+            
+            if self.self_reflection is not None:
+                tasks.append(self.self_reflection.get_reflection_report())
+            else:
+                tasks.append(asyncio.sleep(0, result={"error": "self_reflection not initialized"}))
+            
+            if self.knowledge_compressor is not None:
+                tasks.append(self.knowledge_compressor.get_compression_report())
+            else:
+                tasks.append(asyncio.sleep(0, result={"error": "knowledge_compressor not initialized"}))
+            
+            if self.multi_agent is not None:
+                tasks.append(self.multi_agent.get_orchestration_report())
+            else:
+                tasks.append(asyncio.sleep(0, result={"error": "multi_agent not initialized"}))
+            
+            if self.future_predictor is not None:
+                tasks.append(self.future_predictor.get_prediction_report())
+            else:
+                tasks.append(asyncio.sleep(0, result={"error": "future_predictor not initialized"}))
+            
+            if self.inner_language is not None:
+                tasks.append(self.inner_language.get_inner_language_report())
+            else:
+                tasks.append(asyncio.sleep(0, result={"error": "inner_language not initialized"}))
             
             reports = await asyncio.gather(*tasks, return_exceptions=True)
             
             status = {
                 "cognitive_engine": {
                     "processing_stats": self.processing_stats,
-                    "active_systems": 5,
+                    "active_systems": sum(
+                        1 for r in reports 
+                        if isinstance(r, dict) and "error" not in r
+                    ),
                     "default_mode": self.default_mode.value
                 },
-                "self_reflection": reports[0] if not isinstance(reports[0], Exception) else {"error": str(reports[0])},
-                "knowledge_compression": reports[1] if not isinstance(reports[1], Exception) else {"error": str(reports[1])},
-                "multi_agent": reports[2] if not isinstance(reports[2], Exception) else {"error": str(reports[2])},
-                "future_prediction": reports[3] if not isinstance(reports[3], Exception) else {"error": str(reports[3])},
-                "inner_language": reports[4] if not isinstance(reports[4], Exception) else {"error": str(reports[4])}
+                "self_reflection": reports[0],
+                "knowledge_compression": reports[1],
+                "multi_agent": reports[2],
+                "future_prediction": reports[3],
+                "inner_language": reports[4],
             }
             
             return status
@@ -690,8 +738,10 @@ class AdvancedCognitiveEngine:
             log_error(f"[COGNITIVE_ENGINE] Błąd pobierania statusu: {e}")
             return {"error": str(e)}
 
+
 # Globalna instancja silnika
-_advanced_cognitive_engine = None
+_advanced_cognitive_engine: Optional[AdvancedCognitiveEngine] = None
+
 
 def get_advanced_cognitive_engine() -> AdvancedCognitiveEngine:
     """Pobierz globalną instancję zaawansowanego silnika kognitywnego"""
@@ -699,6 +749,7 @@ def get_advanced_cognitive_engine() -> AdvancedCognitiveEngine:
     if _advanced_cognitive_engine is None:
         _advanced_cognitive_engine = AdvancedCognitiveEngine()
     return _advanced_cognitive_engine
+
 
 # Główne funkcje API
 async def process_with_full_cognition(
@@ -709,15 +760,6 @@ async def process_with_full_cognition(
 ) -> Dict[str, Any]:
     """
     Główna funkcja przetwarzania z pełną kognicją
-    
-    Args:
-        user_message: Wiadomość użytkownika
-        user_id: ID użytkownika  
-        conversation_context: Kontekst konwersacji
-        mode: Tryb kognitywny ("basic", "enhanced", "advanced", "full_cognitive")
-        
-    Returns:
-        Dict: Wynik przetwarzania kognitywnego
     """
     
     engine = get_advanced_cognitive_engine()
@@ -734,7 +776,6 @@ async def process_with_full_cognition(
         cognitive_mode=cognitive_mode
     )
     
-    # Konwertuj na dict dla API
     return {
         "response": result.primary_response,
         "reflection_insights": result.reflection_insights,
@@ -750,7 +791,7 @@ async def process_with_full_cognition(
         }
     }
 
-# Test funkcji
+
 if __name__ == "__main__":
     async def test_advanced_cognitive_engine():
         """Test zaawansowanego silnika kognitywnego"""
@@ -771,7 +812,6 @@ if __name__ == "__main__":
             print(f"\n🎯 TEST {i}: {query}")
             print("-" * 60)
             
-            # Test w różnych trybach
             modes = [CognitiveMode.BASIC, CognitiveMode.ENHANCED, CognitiveMode.FULL_COGNITIVE]
             
             for mode in modes:
@@ -797,7 +837,6 @@ if __name__ == "__main__":
                 if result.future_predictions:
                     print(f"🔮 Predykcji: {len(result.future_predictions)}")
         
-        # Status systemu
         print(f"\n📊 STATUS SYSTEMU KOGNITYWNEGO")
         print("-" * 40)
         
@@ -809,5 +848,4 @@ if __name__ == "__main__":
         print(f"🎯 Dokładność predykcji: {main_stats.get('prediction_accuracy', 0):.2f}")
         print(f"🔧 Ulepszeń refleksyjnych: {main_stats.get('reflection_improvements', 0)}")
     
-    # Uruchom test
     asyncio.run(test_advanced_cognitive_engine())

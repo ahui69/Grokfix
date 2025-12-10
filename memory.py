@@ -415,6 +415,24 @@ class MemoryDatabase:
             c.execute("CREATE INDEX IF NOT EXISTS idx_semantic_type ON semantic_memory(type);")
             c.execute("CREATE INDEX IF NOT EXISTS idx_semantic_timestamp ON semantic_memory(timestamp DESC);")
             
+            # ═══════════════════════════════════════════════════════════
+            # EPISODIC MEMORY TABLE (for legacy compatibility)
+            # ═══════════════════════════════════════════════════════════
+            c.execute("""
+                CREATE TABLE IF NOT EXISTS episodic_memory (
+                    id TEXT PRIMARY KEY,
+                    event_type TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    timestamp REAL NOT NULL,
+                    context TEXT,
+                    user_id TEXT,
+                    importance REAL DEFAULT 0.5,
+                    metadata TEXT
+                );
+            """)
+            c.execute("CREATE INDEX IF NOT EXISTS idx_episodic_user_ts ON episodic_memory(user_id, timestamp DESC);")
+            c.execute("CREATE INDEX IF NOT EXISTS idx_episodic_type ON episodic_memory(event_type);")
+            
             conn.commit()
             log_info("Memory database initialized successfully", "MEMORY_DB")
     
