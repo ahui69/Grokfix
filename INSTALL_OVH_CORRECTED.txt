@@ -1,0 +1,96 @@
+╔══════════════════════════════════════════════════════════╗
+║  🚀 MORDZIX AI - INSTALACJA NA OVH VPS                 ║
+║     (FOLDER: full/)                                     ║
+╚══════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════
+KROK 1: UPLOAD FOLDERU full/ NA VPS
+═══════════════════════════════════════════════════════════
+
+Method A: SCP
+-------------
+scp -r /workspace/full ubuntu@your-vps-ip:~
+
+Method B: Git
+-------------
+ssh ubuntu@your-vps-ip
+git clone https://github.com/ahui69/aktywmrd.git
+cd aktywmrd/full
+
+Method C: Tar.gz
+----------------
+# Lokalnie:
+cd /workspace
+tar -czf full.tar.gz full/
+scp full.tar.gz ubuntu@your-vps-ip:~
+
+# Na VPS:
+ssh ubuntu@your-vps-ip
+tar -xzf full.tar.gz
+cd full
+
+═══════════════════════════════════════════════════════════
+KROK 2: SSH NA VPS
+═══════════════════════════════════════════════════════════
+
+ssh ubuntu@your-vps-ip
+
+═══════════════════════════════════════════════════════════
+KROK 3: WEJDŹ DO FOLDERU full/
+═══════════════════════════════════════════════════════════
+
+cd ~/full
+
+(NIE cd mordzix! FOLDER NAZYWA SIĘ full!)
+
+═══════════════════════════════════════════════════════════
+KROK 4: SPRAWDŹ .env (jeśli upload przez SCP)
+═══════════════════════════════════════════════════════════
+
+# Jeśli wrzuciłeś przez scp -r, .env już jest z kluczami! ✅
+ls -la .env
+
+# Jeśli nie ma (git), skopiuj z example:
+cp .env.example .env
+nano .env
+# Wypełnij: LLM_API_KEY, AUTH_TOKEN, etc.
+
+═══════════════════════════════════════════════════════════
+KROK 5: URUCHOM
+═══════════════════════════════════════════════════════════
+
+./start.sh
+
+LUB:
+
+./START_OVH.sh
+
+═══════════════════════════════════════════════════════════
+KROK 6: OTWÓRZ FIREWALL
+═══════════════════════════════════════════════════════════
+
+sudo ufw allow 8080/tcp
+sudo ufw enable
+
+═══════════════════════════════════════════════════════════
+KROK 7: TEST
+═══════════════════════════════════════════════════════════
+
+http://your-vps-ip:8080
+
+✅ DZIAŁA!
+
+═══════════════════════════════════════════════════════════
+SUMMARY
+═══════════════════════════════════════════════════════════
+
+1. Upload full/ na VPS
+2. ssh ubuntu@vps-ip
+3. cd ~/full           ← TUTAJ! cd full!
+4. ./start.sh
+5. ufw allow 8080
+6. Otwórz: http://vps-ip:8080
+
+FOLDER: full/ (NIE mordzix!)
+
+═══════════════════════════════════════════════════════════

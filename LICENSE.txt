@@ -1,0 +1,99 @@
+================================================================================
+                         MORDZIX AI PRO - LICENCJA KOMERCYJNA
+================================================================================
+
+Wersja: 6.0.0 PRO
+Data wydania: 05.12.2024
+Typ licencji: Komercyjna (Proprietary)
+
+================================================================================
+                              1. DEFINICJE
+================================================================================
+
+"Oprogramowanie" - system Mordzix AI PRO, w tym kod źródłowy, dokumentacja,
+interfejs użytkownika, API oraz wszystkie materiały towarzyszące.
+
+"Licencjodawca" - właściciel praw autorskich do Oprogramowania.
+
+"Licencjobiorca" - osoba fizyczna lub prawna, która nabyła licencję na
+korzystanie z Oprogramowania.
+
+================================================================================
+                         2. UDZIELENIE LICENCJI
+================================================================================
+
+Na mocy niniejszej Umowy, Licencjodawca udziela Licencjobiorcy niewyłącznej,
+niezbywalnej licencji na korzystanie z Oprogramowania na następujących warunkach:
+
+2.1 PRAWA LICENCYJNE:
+    ✓ Użytkowanie komercyjne
+    ✓ Instalacja na własnym serwerze
+    ✓ Pełny dostęp do API (186+ endpointów)
+    ✓ Moduł Legal Office (pisma urzędowe)
+    ✓ System pamięci AI (STM/LTM)
+    ✓ Media Module (TTS, Image Generation)
+    ✓ Web Search Integration
+    ✓ Aktualizacje oprogramowania
+    ✓ Wsparcie techniczne
+
+2.2 OGRANICZENIA:
+    ✗ Odsprzedaż lub sublicencjonowanie
+    ✗ Dekompilacja lub inżynieria wsteczna
+    ✗ Usuwanie oznaczeń praw autorskich
+    ✗ Publiczne udostępnianie kodu źródłowego
+    ✗ Tworzenie dzieł pochodnych bez zgody
+
+================================================================================
+                       3. MODUŁ LEGAL OFFICE - ZASTRZEŻENIA
+================================================================================
+
+Moduł "Legal Office" (Pisma Urzędowe) służy wyłącznie jako narzędzie pomocnicze.
+
+WAŻNE:
+- Wygenerowane pisma mają charakter INFORMACYJNY i POMOCNICZY
+- NIE stanowią porady prawnej w rozumieniu ustaw o radcach prawnych i adwokaturze
+- Przed złożeniem pisma urzędowego ZALECA SIĘ konsultację z prawnikiem
+- Licencjodawca NIE PONOSI ODPOWIEDZIALNOŚCI za skutki prawne użycia pism
+
+================================================================================
+                    4. WYŁĄCZENIE ODPOWIEDZIALNOŚCI
+================================================================================
+
+OPROGRAMOWANIE JEST DOSTARCZANE "TAK JAK JEST" (AS IS), BEZ JAKICHKOLWIEK
+GWARANCJI WYRAŹNYCH LUB DOROZUMIANYCH.
+
+Licencjodawca NIE PONOSI ODPOWIEDZIALNOŚCI za:
+- Szkody bezpośrednie, pośrednie, przypadkowe lub wtórne
+- Utratę danych, zysków lub przerwy w działalności
+- Błędy w odpowiedziach generowanych przez AI
+- Decyzje podjęte na podstawie wygenerowanych treści
+
+================================================================================
+                         5. PRAWA AUTORSKIE
+================================================================================
+
+Mordzix AI PRO © 2024. Wszelkie prawa zastrzeżone.
+
+Oprogramowanie, kod źródłowy, dokumentacja, interfejs użytkownika oraz
+wszystkie materiały towarzyszące są chronione prawem autorskim i stanowią
+własność Licencjodawcy.
+
+================================================================================
+                          6. POSTANOWIENIA KOŃCOWE
+================================================================================
+
+6.1 Niniejsza Umowa podlega prawu polskiemu.
+
+6.2 Wszelkie spory wynikające z niniejszej Umowy będą rozstrzygane przez
+    sąd właściwy dla siedziby Licencjodawcy.
+
+6.3 Nieważność któregokolwiek postanowienia nie wpływa na ważność pozostałych.
+
+6.4 Zmiany Umowy wymagają formy pisemnej pod rygorem nieważności.
+
+================================================================================
+
+Data wejścia w życie: 05 grudnia 2024
+Wersja umowy: 1.0
+
+================================================================================

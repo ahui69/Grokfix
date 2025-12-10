@@ -1,0 +1,23 @@
+services:
+  api:
+    build: .
+    container_name: mordzix_api
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - WORKSPACE=${WORKSPACE:-/mrd}
+    volumes:
+      - ./data:/mrd/data
+      - ./logs:/mrd/logs
+      - ./uploads:/mrd/out/uploads
+    restart: unless-stopped
+
+  lint:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: >
+      sh -lc "npx -y eslint@latest . --fix --ext .js,.jsx,.ts,.tsx"

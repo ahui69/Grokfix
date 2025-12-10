@@ -1,0 +1,7 @@
+# 23. AI HACKER (pentesting tools)
+try:
+    import hacker_endpoint
+    app.include_router(hacker_endpoint.router)
+    print("✓ AI Hacker endpoint      /api/hacker/*")
+except Exception as e:
+    print(f"✗ AI Hacker endpoint: {e}")

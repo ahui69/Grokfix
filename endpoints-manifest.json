@@ -1,0 +1,1968 @@
+[
+  {
+    "path": "/",
+    "methods": [
+      "GET"
+    ],
+    "name": "serve_frontend",
+    "summary": null,
+    "description": "Główny interfejs czatu - Angular SPA lub WebUI",
+    "tags": []
+  },
+  {
+    "path": "/api",
+    "methods": [
+      "GET"
+    ],
+    "name": "api_status",
+    "summary": null,
+    "description": "Status API",
+    "tags": []
+  },
+  {
+    "path": "/api/admin/cache/clear",
+    "methods": [
+      "POST"
+    ],
+    "name": "clear_cache",
+    "summary": null,
+    "description": "🗑️ Clear cache",
+    "tags": []
+  },
+  {
+    "path": "/api/admin/cache/stats",
+    "methods": [
+      "GET"
+    ],
+    "name": "cache_stats",
+    "summary": null,
+    "description": "📊 Get cache statistics",
+    "tags": []
+  },
+  {
+    "path": "/api/admin/jwt/rotate",
+    "methods": [
+      "POST"
+    ],
+    "name": "admin_rotate_jwt",
+    "summary": null,
+    "description": null,
+    "tags": []
+  },
+  {
+    "path": "/api/admin/ratelimit/config",
+    "methods": [
+      "GET"
+    ],
+    "name": "rate_limit_config",
+    "summary": null,
+    "description": "⚙️ Get rate limit configuration",
+    "tags": []
+  },
+  {
+    "path": "/api/admin/ratelimit/usage/{user_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "rate_limit_usage",
+    "summary": null,
+    "description": "📈 Get rate limit usage for user",
+    "tags": []
+  },
+  {
+    "path": "/api/automation/status",
+    "methods": [
+      "GET"
+    ],
+    "name": "automation_status",
+    "summary": null,
+    "description": "Podsumowanie automatycznych narzędzi i fast path.",
+    "tags": []
+  },
+  {
+    "path": "/api/autoroute/analyze",
+    "methods": [
+      "POST"
+    ],
+    "name": "analyze_route",
+    "summary": null,
+    "description": "🎯 Analizuje input użytkownika i zwraca najlepszy endpoint\n\nUsage z frontu:\n```javascript\nconst result = await fetch('/api/autoroute/analyze', {\n    method: 'POST',\n    body: JSON.stringify({\n        user_input: \"sprawdź pogodę w Warszawie\",\n        context: { hour: 14, recent_categories: [\"research\"] }\n    })\n});\n```",
+    "tags": [
+      "autorouter"
+    ]
+  },
+  {
+    "path": "/api/autoroute/endpoints",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_available_endpoints",
+    "summary": null,
+    "description": "📋 Zwraca mapę wszystkich dostępnych endpointów dla frontu\n\nPrzydatne do generowania UI, podpowiedzi, itp.",
+    "tags": [
+      "autorouter"
+    ]
+  },
+  {
+    "path": "/api/autoroute/execute",
+    "methods": [
+      "POST"
+    ],
+    "name": "execute_route",
+    "summary": null,
+    "description": "⚡ Analizuje input I AUTOMATYCZNIE WYKONUJE odpowiedni endpoint\n\nTo jest główna funkcja dla frontu - one-click routing!",
+    "tags": [
+      "autorouter"
+    ]
+  },
+  {
+    "path": "/api/autoroute/stats",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_routing_stats",
+    "summary": null,
+    "description": "📊 Statystyki routingu dla dashboardu admina",
+    "tags": [
+      "autorouter"
+    ]
+  },
+  {
+    "path": "/api/batch/metrics",
+    "methods": [
+      "GET"
+    ],
+    "name": "batch_metrics_endpoint",
+    "summary": "Pobiera metryki procesora wsadowego",
+    "description": "Pobiera metryki i statystyki procesora wsadowego\n\nReturns:\n    Metryki procesora wsadowego",
+    "tags": [
+      "LLM Batch Processing"
+    ]
+  },
+  {
+    "path": "/api/batch/process",
+    "methods": [
+      "POST"
+    ],
+    "name": "batch_process_endpoint",
+    "summary": "Wykonuje wsadowe przetwarzanie zapytań LLM",
+    "description": "Wykonuje wsadowe przetwarzanie wielu zapytań LLM jednocześnie\n\nArgs:\n    data: Zawiera:\n        - messages_list: Lista list wiadomości (każda lista to wiadomości dla jednego wywołania LLM)\n        - params_list: (opcjonalne) Lista parametrów dla każdego wywołania\n        \nReturns:\n    Lista odpowiedzi LLM",
+    "tags": [
+      "LLM Batch Processing"
+    ]
+  },
+  {
+    "path": "/api/batch/shutdown",
+    "methods": [
+      "POST"
+    ],
+    "name": "batch_shutdown_endpoint",
+    "summary": "Zatrzymuje procesor wsadowy",
+    "description": "Zatrzymuje procesor wsadowy\n\nReturns:\n    Status operacji",
+    "tags": [
+      "LLM Batch Processing"
+    ]
+  },
+  {
+    "path": "/api/batch/submit",
+    "methods": [
+      "POST"
+    ],
+    "name": "batch_submit_endpoint",
+    "summary": "Dodaje pojedyncze zapytanie do wsadowego przetwarzania",
+    "description": "Dodaje pojedyncze zapytanie do wsadowego przetwarzania\n\nArgs:\n    data: Zawiera:\n        - messages: Lista wiadomości dla LLM\n        - params: (opcjonalne) Parametry dla LLM\n        - priority: (opcjonalne) Priorytet zapytania\n        - request_id: (opcjonalne) Identyfikator zapytania\n        \nReturns:\n    Odpowiedź LLM",
+    "tags": [
+      "LLM Batch Processing"
+    ]
+  },
+  {
+    "path": "/api/captcha/balance",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_balance",
+    "summary": null,
+    "description": "Sprawdź saldo 2captcha",
+    "tags": [
+      "captcha"
+    ]
+  },
+  {
+    "path": "/api/captcha/solve",
+    "methods": [
+      "POST"
+    ],
+    "name": "solve_captcha",
+    "summary": null,
+    "description": "Rozwiąż captcha przez 2captcha API",
+    "tags": [
+      "captcha"
+    ]
+  },
+  {
+    "path": "/api/chat/assistant",
+    "methods": [
+      "POST"
+    ],
+    "name": "chat_assistant",
+    "summary": null,
+    "description": null,
+    "tags": []
+  },
+  {
+    "path": "/api/chat/assistant/stream",
+    "methods": [
+      "POST"
+    ],
+    "name": "chat_assistant_stream",
+    "summary": null,
+    "description": null,
+    "tags": []
+  },
+  {
+    "path": "/api/chat/auto",
+    "methods": [
+      "POST"
+    ],
+    "name": "force_auto_learn",
+    "summary": null,
+    "description": null,
+    "tags": []
+  },
+  {
+    "path": "/api/code/deps/install",
+    "methods": [
+      "POST"
+    ],
+    "name": "deps_install",
+    "summary": null,
+    "description": "📦 Install dependencies\n\nWymaga confirm=True!",
+    "tags": []
+  },
+  {
+    "path": "/api/code/docker/build",
+    "methods": [
+      "POST"
+    ],
+    "name": "docker_build",
+    "summary": null,
+    "description": "🐳 Build Docker image\n\nWymaga confirm=True!",
+    "tags": []
+  },
+  {
+    "path": "/api/code/docker/run",
+    "methods": [
+      "POST"
+    ],
+    "name": "docker_run",
+    "summary": null,
+    "description": "🚀 Run Docker container\n\nWymaga confirm=True!",
+    "tags": []
+  },
+  {
+    "path": "/api/code/exec",
+    "methods": [
+      "POST"
+    ],
+    "name": "exec_command",
+    "summary": null,
+    "description": "🔧 Execute shell command\n\nWymaga confirm=True dla bezpieczeństwa!\nUżyj dry_run=True dla preview.",
+    "tags": []
+  },
+  {
+    "path": "/api/code/format",
+    "methods": [
+      "POST"
+    ],
+    "name": "format_code",
+    "summary": null,
+    "description": "💅 Format code\n\nWymaga confirm=True jeśli check=False!",
+    "tags": []
+  },
+  {
+    "path": "/api/code/git",
+    "methods": [
+      "POST"
+    ],
+    "name": "git",
+    "summary": null,
+    "description": "🔀 Git operations\n\nWymaga confirm=True dla destructive ops (commit, push)!",
+    "tags": []
+  },
+  {
+    "path": "/api/code/init",
+    "methods": [
+      "POST"
+    ],
+    "name": "project_init",
+    "summary": null,
+    "description": "🆕 Initialize new project\n\nCreates: src/, tests/, README.md, pyproject.toml/package.json",
+    "tags": []
+  },
+  {
+    "path": "/api/code/lint",
+    "methods": [
+      "POST"
+    ],
+    "name": "lint",
+    "summary": null,
+    "description": "✨ Lint code\n\nWymaga confirm=True jeśli fix=True!",
+    "tags": []
+  },
+  {
+    "path": "/api/code/plan",
+    "methods": [
+      "POST"
+    ],
+    "name": "plan",
+    "summary": null,
+    "description": "📋 Plan project steps\n\nZwraca rekomendowane kroki dla projektu",
+    "tags": []
+  },
+  {
+    "path": "/api/code/read",
+    "methods": [
+      "GET"
+    ],
+    "name": "read_file",
+    "summary": null,
+    "description": "📖 Read file",
+    "tags": []
+  },
+  {
+    "path": "/api/code/snapshot",
+    "methods": [
+      "GET"
+    ],
+    "name": "snapshot",
+    "summary": null,
+    "description": "📊 System snapshot - dostępne narzędzia\n\nZwraca informacje o dostępnych narzędziach programistycznych",
+    "tags": []
+  },
+  {
+    "path": "/api/code/test",
+    "methods": [
+      "POST"
+    ],
+    "name": "test",
+    "summary": null,
+    "description": "🧪 Run tests\n\nWymaga confirm=True!",
+    "tags": []
+  },
+  {
+    "path": "/api/code/tree",
+    "methods": [
+      "GET"
+    ],
+    "name": "read_tree",
+    "summary": null,
+    "description": "🌳 Read project tree",
+    "tags": []
+  },
+  {
+    "path": "/api/code/write",
+    "methods": [
+      "POST"
+    ],
+    "name": "write_file",
+    "summary": null,
+    "description": "📝 Write file\n\nWymaga confirm=True!",
+    "tags": []
+  },
+  {
+    "path": "/api/cognitive/nlp/analyze",
+    "methods": [
+      "POST"
+    ],
+    "name": "nlp_advanced_analysis",
+    "summary": null,
+    "description": "🔍 ZAAWANSOWANA ANALIZA NLP\n\nKompleksowa analiza tekstu z wykorzystaniem spaCy (pl_core_news_sm):\n- NER (Named Entity Recognition): osoby, organizacje, lokalizacje, daty\n- Keywords extraction: najważniejsze słowa kluczowe\n- Sentiment analysis: pozytywny/negatywny/neutralny\n- POS tagging: części mowy\n- Dependency parsing: relacje syntaktyczne\n- Phrase extraction: wydobycie fraz\n\n**Zwraca:**\n- entities: Lista encji z typami (PERSON, ORG, LOC, DATE, etc.)\n- keywords: Słowa kluczowe z wagami\n- sentiment: {score, label, confidence}\n- pos_tags: Części mowy\n- dependencies: Relacje syntaktyczne (jeśli włączone)\n- phrases: Wydobyte frazy",
+    "tags": [
+      "cognitive"
+    ]
+  },
+  {
+    "path": "/api/cognitive/proactive/suggestions",
+    "methods": [
+      "POST"
+    ],
+    "name": "generate_proactive_suggestions",
+    "summary": null,
+    "description": "💡 PROAKTYWNE SUGESTIE\n\nGeneruje inteligentne sugestie na podstawie:\n- Analizy kontekstu konwersacji\n- Wzorców użytkownika\n- Tematów i intencji\n- Predykcji potrzeb\n\n**Zwraca:**\n- suggestions: Lista sugestii z confidence score\n- context_analysis: Analiza kontekstu (tematy, intencje, sentiment)\n- next_probable_questions: Przewidywane pytania",
+    "tags": [
+      "cognitive"
+    ]
+  },
+  {
+    "path": "/api/cognitive/process",
+    "methods": [
+      "POST"
+    ],
+    "name": "cognitive_process",
+    "summary": null,
+    "description": "🧠 PEŁNE PRZETWARZANIE KOGNITYWNE\n\nOrkiestracja wszystkich 5 systemów kognitywnych:\n1. Self-Reflection - dynamiczna refleksja\n2. Knowledge Compression - kompresja wiedzy\n3. Multi-Agent Orchestrator - wieloagentowe myślenie (Analityk, Kreatywny, Pragmatyczny, Krytyczny, Syntetyczny)\n4. Future Predictor - przewidywanie kontekstu\n5. Inner Language - wewnętrzny język semantyczny\n\n**Tryby:**\n- BASIC: Podstawowe przetwarzanie\n- ENHANCED: Z refleksją i kompresją\n- ADVANCED: Wszystkie systemy\n- PREDICTIVE: Z predykcją przyszłości\n- MULTI_AGENT: Z orkiestracją agentów\n- FULL_COGNITIVE: Wszystkie systemy aktywne\n\n**Zwraca:**\n- primary_response: Główna odpowiedź\n- reflection_insights: Insights z refleksji\n- agent_perspectives: Perspektywy agentów (jeśli multi-agent)\n- future_predictions: Predykcje (jeśli predictive)\n- compressed_knowledge: Skompresowana wiedza\n- inner_thought: Wewnętrzna myśl AI\n- confidence_score, originality_score: Metryki",
+    "tags": [
+      "cognitive"
+    ]
+  },
+  {
+    "path": "/api/cognitive/psychology/analyze",
+    "methods": [
+      "POST"
+    ],
+    "name": "analyze_emotional_state",
+    "summary": null,
+    "description": "🧠 ANALIZA EMOCJONALNA\n\nZaawansowana analiza psychologiczna wiadomości:\n- Podstawowe emocje (Plutchik's wheel: joy, trust, fear, surprise, sadness, disgust, anger, anticipation)\n- PAD model: valence (pozytywna-negatywna), arousal (pobudzenie), dominance\n- Sentiment analysis\n- Mood tracking\n\n**Zwraca:**\n- emotions: Słownik emocji z intensywnością (0.0-1.0)\n- valence, arousal, dominance: PAD scores\n- mood: Długoterminowy nastrój\n- sentiment: Sentiment analysis",
+    "tags": [
+      "cognitive"
+    ]
+  },
+  {
+    "path": "/api/cognitive/psychology/state/{user_id}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_psychology_state",
+    "summary": null,
+    "description": "📊 STAN PSYCHOLOGICZNY AI\n\nPobiera aktualny stan emocjonalny AI dla danego użytkownika",
+    "tags": [
+      "cognitive"
+    ]
+  },
+  {
+    "path": "/api/cognitive/reflect",
+    "methods": [
+      "POST"
+    ],
+    "name": "self_reflect",
+    "summary": null,
+    "description": "🔄 DYNAMICZNA REKURENCJA UMYSŁOWA\n\nAI ocenia swoją odpowiedź i poprawia ją przez wielopoziomową refleksję:\n- SURFACE: Podstawowa ewaluacja (faktyczność, jasność)\n- MEDIUM: Logika, kompletność, kontekst, błędy\n- DEEP: Kognitywna + pragmatyczna + meta + epistemologiczna analiza\n- PROFOUND: Filozoficzna refleksja (ontologia, aksjologia, hermeneutyka)\n- TRANSCENDENT: Przekroczenie granic myśli, transformacja\n\n**Zwraca:**\n- improved_response: Poprawiona odpowiedź\n- meta_commentary: Meta-komentarz o procesie myślenia\n- reflection_score: Jakość refleksji (0.0-1.0)\n- insights_gained: Lista nauk z procesu\n- corrections_made: Lista konkretnych poprawek",
+    "tags": [
+      "cognitive"
+    ]
+  },
+  {
+    "path": "/api/cognitive/reflection/summary",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_reflection_summary",
+    "summary": null,
+    "description": "📊 PODSUMOWANIE REFLEKSJI\n\nZwraca statystyki wszystkich procesów refleksji:\n- Total reflections, average score, cycle time\n- Depth distribution\n- Total insights & corrections\n- Meta-patterns",
+    "tags": [
+      "cognitive"
+    ]
+  },
+  {
+    "path": "/api/cognitive/semantic/analyze",
+    "methods": [
+      "POST"
+    ],
+    "name": "semantic_analysis",
+    "summary": null,
+    "description": "🧬 ANALIZA SEMANTYCZNA\n\nZaawansowana analiza semantyczna tekstu:\n- Embeddingi (sentence-transformers)\n- Ekstrakcja konceptów\n- Identyfikacja relacji\n- Podobieństwo semantyczne (jeśli compare_with)\n\n**Zwraca:**\n- embedding: Wektor semantyczny (768 wymiarów)\n- concepts: Wydobyte koncepty\n- relations: Relacje między konceptami\n- similarity: Podobieństwo (jeśli compare_with)",
+    "tags": [
+      "cognitive"
+    ]
+  },
+  {
+    "path": "/api/cognitive/status",
+    "methods": [
+      "GET"
+    ],
+    "name": "cognitive_status",
+    "summary": null,
+    "description": "📊 STATUS SYSTEMÓW KOGNITYWNYCH\n\nZwraca status wszystkich zaawansowanych systemów",
+    "tags": [
+      "cognitive"
+    ]
+  },
+  {
+    "path": "/api/cognitive/tools/list",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_cognitive_tools",
+    "summary": null,
+    "description": "🛠️ LISTA NARZĘDZI KOGNITYWNYCH\n\nZwraca listę wszystkich dostępnych narzędzi z tools_registry",
+    "tags": [
+      "cognitive"
+    ]
+  },
+  {
+    "path": "/api/endpoints/list",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_endpoints",
+    "summary": null,
+    "description": "Lista wszystkich endpointów API",
+    "tags": []
+  },
+  {
+    "path": "/api/fashion/categories",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_fashion_categories",
+    "summary": "Pobiera dostępne kategorie mody",
+    "description": "Pobiera listę dostępnych kategorii mody.\n\nReturns:\n    Lista kategorii modowych",
+    "tags": [
+      "AI Fashion"
+    ]
+  },
+  {
+    "path": "/api/fashion/detect-brand",
+    "methods": [
+      "POST"
+    ],
+    "name": "detect_brand",
+    "summary": "Rozpoznaje markę z obrazu",
+    "description": "Rozpoznaje markę modową z przesłanego obrazu.\n\nArgs:\n    request: Zawiera description (opcjonalne), user_id\n    image: Przesłany obraz do analizy\n    \nReturns:\n    Rozpoznaną markę z prawdopodobieństwem",
+    "tags": [
+      "AI Fashion"
+    ]
+  },
+  {
+    "path": "/api/fashion/forecast-trends",
+    "methods": [
+      "POST"
+    ],
+    "name": "forecast_trends",
+    "summary": "Prognozuje trendy modowe",
+    "description": "Prognozuje trendy modowe dla danej kategorii i okresu.\n\nArgs:\n    request: Zawiera category, timeframe, region, user_id\n    \nReturns:\n    Prognozy trendów z poziomem pewności",
+    "tags": [
+      "AI Fashion"
+    ]
+  },
+  {
+    "path": "/api/fashion/generate-outfit",
+    "methods": [
+      "POST"
+    ],
+    "name": "generate_outfit",
+    "summary": "Generuje stylizację na podstawie okazji i pogody",
+    "description": "Generuje stylizację na podstawie okazji, pogody i preferencji stylu.\n\nArgs:\n    request: Zawiera occasion, weather, style_preferences, user_id\n    \nReturns:\n    Pełną stylizację z rekomendacjami",
+    "tags": [
+      "AI Fashion"
+    ]
+  },
+  {
+    "path": "/api/fashion/occasions",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_occasions",
+    "summary": "Pobiera dostępne okazje",
+    "description": "Pobiera listę dostępnych okazji do stylizacji.\n\nReturns:\n    Lista okazji",
+    "tags": [
+      "AI Fashion"
+    ]
+  },
+  {
+    "path": "/api/fashion/stats",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_fashion_stats",
+    "summary": "Pobiera statystyki AI Fashion",
+    "description": "Pobiera statystyki użycia AI Fashion Manager.\n\nReturns:\n    Statystyki systemu mody",
+    "tags": [
+      "AI Fashion"
+    ]
+  },
+  {
+    "path": "/api/fashion/weather-types",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_weather_types",
+    "summary": "Pobiera typy pogody",
+    "description": "Pobiera listę typów pogody do stylizacji.\n\nReturns:\n    Lista typów pogody",
+    "tags": [
+      "AI Fashion"
+    ]
+  },
+  {
+    "path": "/api/ff/proxy",
+    "methods": [
+      "POST"
+    ],
+    "name": "proxy",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "ff-proxy"
+    ]
+  },
+  {
+    "path": "/api/files/analyze",
+    "methods": [
+      "POST"
+    ],
+    "name": "analyze_file",
+    "summary": null,
+    "description": "🔍 Analyze uploaded file\n\nExtract text, metadata, dimensions, etc.",
+    "tags": []
+  },
+  {
+    "path": "/api/files/batch/analyze",
+    "methods": [
+      "POST"
+    ],
+    "name": "batch_analyze",
+    "summary": null,
+    "description": "🔍 Batch analyze multiple files",
+    "tags": []
+  },
+  {
+    "path": "/api/files/delete",
+    "methods": [
+      "POST"
+    ],
+    "name": "delete_file",
+    "summary": null,
+    "description": "🗑️ Delete file",
+    "tags": []
+  },
+  {
+    "path": "/api/files/download",
+    "methods": [
+      "GET"
+    ],
+    "name": "download_file",
+    "summary": null,
+    "description": "📥 Download file by ID",
+    "tags": []
+  },
+  {
+    "path": "/api/files/list",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_files",
+    "summary": null,
+    "description": "📋 List all uploaded files",
+    "tags": []
+  },
+  {
+    "path": "/api/files/stats",
+    "methods": [
+      "GET"
+    ],
+    "name": "files_stats",
+    "summary": null,
+    "description": "📊 Files statistics",
+    "tags": []
+  },
+  {
+    "path": "/api/files/thumb/{tenant}/{day}/{name}",
+    "methods": [
+      "GET"
+    ],
+    "name": "thumb",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "files"
+    ]
+  },
+  {
+    "path": "/api/files/upload",
+    "methods": [
+      "POST"
+    ],
+    "name": "upload",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "files"
+    ]
+  },
+  {
+    "path": "/api/files/upload",
+    "methods": [
+      "POST"
+    ],
+    "name": "upload_file",
+    "summary": null,
+    "description": "📤 Upload file (multipart/form-data)\n\nSupports: PDF, images, ZIP, text files, video, audio, code files\nMax size: 50MB",
+    "tags": []
+  },
+  {
+    "path": "/api/files/upload/base64",
+    "methods": [
+      "POST"
+    ],
+    "name": "upload_base64",
+    "summary": null,
+    "description": "📤 Upload file (base64 encoded)\n\nFor frontend that sends files as base64",
+    "tags": []
+  },
+  {
+    "path": "/api/files/{tenant}/{day}/{name}",
+    "methods": [
+      "GET"
+    ],
+    "name": "download",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "files"
+    ]
+  },
+  {
+    "path": "/api/hacker/exploit/sqli",
+    "methods": [
+      "POST"
+    ],
+    "name": "sql_injection_scanner",
+    "summary": null,
+    "description": "💉 SQL Injection Tester - test parametrów na SQLi",
+    "tags": [
+      "AI Hacker Assistant"
+    ]
+  },
+  {
+    "path": "/api/hacker/exploits/list",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_exploit_modules",
+    "summary": null,
+    "description": "🎯 Lista dostępnych modułów exploitów",
+    "tags": [
+      "AI Hacker Assistant"
+    ]
+  },
+  {
+    "path": "/api/hacker/recon/domain",
+    "methods": [
+      "POST"
+    ],
+    "name": "domain_reconnaissance",
+    "summary": null,
+    "description": "🕵️ Domain Reconnaissance - zbieraj intel o domenie",
+    "tags": [
+      "AI Hacker Assistant"
+    ]
+  },
+  {
+    "path": "/api/hacker/scan/ports",
+    "methods": [
+      "POST"
+    ],
+    "name": "network_scan",
+    "summary": null,
+    "description": "🔍 Port Scanner - skanuj porty na targecie",
+    "tags": [
+      "AI Hacker Assistant"
+    ]
+  },
+  {
+    "path": "/api/hacker/scan/vulnerabilities",
+    "methods": [
+      "POST"
+    ],
+    "name": "vulnerability_scanner",
+    "summary": null,
+    "description": "🔐 Vulnerability Scanner - szukaj podatności",
+    "tags": [
+      "AI Hacker Assistant"
+    ]
+  },
+  {
+    "path": "/api/hacker/tools/status",
+    "methods": [
+      "GET"
+    ],
+    "name": "hacker_tools_status",
+    "summary": null,
+    "description": "🛠️ Status narzędzi hackingowych",
+    "tags": [
+      "AI Hacker Assistant"
+    ]
+  },
+  {
+    "path": "/api/image/file/{tenant}/{name}",
+    "methods": [
+      "GET"
+    ],
+    "name": "image_file",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "image"
+    ]
+  },
+  {
+    "path": "/api/image/generate",
+    "methods": [
+      "POST"
+    ],
+    "name": "generate",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "image"
+    ]
+  },
+  {
+    "path": "/api/internal/ui",
+    "methods": [
+      "GET"
+    ],
+    "name": "ui_info",
+    "summary": null,
+    "description": "Return manifest and optionally token for UI. Token is returned only if env UI_EXPOSE_TOKEN=1 or request is local.",
+    "tags": []
+  },
+  {
+    "path": "/api/internal/ui_token",
+    "methods": [
+      "GET"
+    ],
+    "name": "ui_token",
+    "summary": null,
+    "description": "Return the AUTH_TOKEN only if UI_EXPOSE_TOKEN=1 or request is local.",
+    "tags": []
+  },
+  {
+    "path": "/api/lang/detect",
+    "methods": [
+      "POST"
+    ],
+    "name": "detect",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "lang"
+    ]
+  },
+  {
+    "path": "/api/memory/add",
+    "methods": [
+      "POST"
+    ],
+    "name": "add",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "memory"
+    ]
+  },
+  {
+    "path": "/api/memory/export",
+    "methods": [
+      "GET"
+    ],
+    "name": "export",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "memory"
+    ]
+  },
+  {
+    "path": "/api/memory/import",
+    "methods": [
+      "POST"
+    ],
+    "name": "import_",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "memory"
+    ]
+  },
+  {
+    "path": "/api/memory/optimize",
+    "methods": [
+      "POST"
+    ],
+    "name": "optimize",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "memory"
+    ]
+  },
+  {
+    "path": "/api/memory/search",
+    "methods": [
+      "POST"
+    ],
+    "name": "search",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "memory"
+    ]
+  },
+  {
+    "path": "/api/memory/status",
+    "methods": [
+      "GET"
+    ],
+    "name": "status",
+    "summary": null,
+    "description": "Status systemu pamięci",
+    "tags": [
+      "memory"
+    ]
+  },
+  {
+    "path": "/api/ml/model-info",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_model_info",
+    "summary": "Informacje o modelu ML",
+    "description": "Pobiera informacje o aktualnym modelu ML.\n\nReturns:\n    Model architecture, features, performance",
+    "tags": [
+      "Machine Learning"
+    ]
+  },
+  {
+    "path": "/api/ml/predict-suggestions",
+    "methods": [
+      "POST"
+    ],
+    "name": "predict_suggestions",
+    "summary": "Przewiduje sugestie ML (95% accuracy)",
+    "description": "Przewiduje proaktywne sugestie używając Machine Learning.\nTrafność: 80% → 95% dzięki sklearn/pytorch.\n\nArgs:\n    request: user_id, message, conversation_history, max_suggestions\n    \nReturns:\n    ML-predicted suggestions z wysoką trafnością",
+    "tags": [
+      "Machine Learning"
+    ]
+  },
+  {
+    "path": "/api/ml/record-feedback",
+    "methods": [
+      "POST"
+    ],
+    "name": "record_feedback",
+    "summary": "Zapisuje feedback dla ML model",
+    "description": "Zapisuje feedback użytkownika dla poprawy modelu ML.\nDane uczące dla sklearn/pytorch.\n\nArgs:\n    request: feedback data z user interaction\n    \nReturns:\n    Potwierdzenie zapisania feedback",
+    "tags": [
+      "Machine Learning"
+    ]
+  },
+  {
+    "path": "/api/ml/retrain",
+    "methods": [
+      "POST"
+    ],
+    "name": "retrain_model",
+    "summary": "Retrenuje model ML",
+    "description": "Inicjuje retrening modelu ML na nowych danych.\n\nReturns:\n    Status retrainingu",
+    "tags": [
+      "Machine Learning"
+    ]
+  },
+  {
+    "path": "/api/ml/stats",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_stats",
+    "summary": "Pobiera statystyki ML model",
+    "description": "Pobiera statystyki modelu Machine Learning.\n\nReturns:\n    Accuracy, training data size, model metrics",
+    "tags": [
+      "Machine Learning"
+    ]
+  },
+  {
+    "path": "/api/nlp/analyze",
+    "methods": [
+      "POST"
+    ],
+    "name": "analyze_text",
+    "summary": null,
+    "description": "Przeprowadza kompleksową analizę NLP pojedynczego tekstu\n\n- **text**: Tekst do analizy (1-10000 znaków)\n- **use_cache**: Czy używać cache'a (domyślnie True)",
+    "tags": [
+      "nlp"
+    ]
+  },
+  {
+    "path": "/api/nlp/batch-analyze",
+    "methods": [
+      "POST"
+    ],
+    "name": "batch_analyze_texts",
+    "summary": null,
+    "description": "Przeprowadza analizę NLP dla wielu tekstów wsadowo\n\n- **texts**: Lista tekstów (1-50 tekstów)\n- **batch_size**: Rozmiar wsadu (1-20)",
+    "tags": [
+      "nlp"
+    ]
+  },
+  {
+    "path": "/api/nlp/entities",
+    "methods": [
+      "POST"
+    ],
+    "name": "extract_entities",
+    "summary": null,
+    "description": "Ekstrahuje encje nazwane z tekstu\n\n- **text**: Tekst do analizy\n- **use_cache**: Czy używać cache'a",
+    "tags": [
+      "nlp"
+    ]
+  },
+  {
+    "path": "/api/nlp/extract-topics",
+    "methods": [
+      "POST"
+    ],
+    "name": "extract_topics",
+    "summary": null,
+    "description": "Ekstrahuje tematy z kolekcji tekstów\n\n- **texts**: Lista tekstów (1-100 tekstów)\n- **num_topics**: Liczba tematów do ekstrakcji (1-20)",
+    "tags": [
+      "nlp"
+    ]
+  },
+  {
+    "path": "/api/nlp/key-phrases",
+    "methods": [
+      "POST"
+    ],
+    "name": "extract_key_phrases",
+    "summary": null,
+    "description": "Ekstrahuje frazy kluczowe z tekstu\n\n- **text**: Tekst do analizy\n- **use_cache**: Czy używać cache'a",
+    "tags": [
+      "nlp"
+    ]
+  },
+  {
+    "path": "/api/nlp/readability",
+    "methods": [
+      "POST"
+    ],
+    "name": "calculate_readability",
+    "summary": null,
+    "description": "Oblicza ocenę czytelności tekstu\n\n- **text**: Tekst do analizy\n- **use_cache**: Czy używać cache'a",
+    "tags": [
+      "nlp"
+    ]
+  },
+  {
+    "path": "/api/nlp/sentiment",
+    "methods": [
+      "POST"
+    ],
+    "name": "analyze_sentiment",
+    "summary": null,
+    "description": "Analizuje sentyment tekstu\n\n- **text**: Tekst do analizy\n- **use_cache**: Czy używać cache'a",
+    "tags": [
+      "nlp"
+    ]
+  },
+  {
+    "path": "/api/nlp/stats",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_nlp_stats",
+    "summary": null,
+    "description": "Zwraca statystyki procesora NLP\n\n- Statystyki użycia, wydajności i modeli językowych",
+    "tags": [
+      "nlp"
+    ]
+  },
+  {
+    "path": "/api/prometheus/health",
+    "methods": [
+      "GET"
+    ],
+    "name": "health_check",
+    "summary": null,
+    "description": "Health check dla Prometheus",
+    "tags": [
+      "monitoring"
+    ]
+  },
+  {
+    "path": "/api/prometheus/metrics",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_prometheus_metrics",
+    "summary": null,
+    "description": "Endpoint dla Prometheus - metryki w formacie tekstowym",
+    "tags": [
+      "monitoring"
+    ]
+  },
+  {
+    "path": "/api/prometheus/stats",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_stats",
+    "summary": null,
+    "description": "Statystyki w formacie JSON",
+    "tags": [
+      "monitoring"
+    ]
+  },
+  {
+    "path": "/api/psyche",
+    "methods": [
+      "POST"
+    ],
+    "name": "psyche_analyze",
+    "summary": "Analiza wiadomości i aktualizacja stanu",
+    "description": null,
+    "tags": [
+      "psyche"
+    ]
+  },
+  {
+    "path": "/api/psyche/history",
+    "methods": [
+      "GET"
+    ],
+    "name": "psyche_history",
+    "summary": "Ostatnie wiadomości",
+    "description": null,
+    "tags": [
+      "psyche"
+    ]
+  },
+  {
+    "path": "/api/psyche/reset",
+    "methods": [
+      "POST"
+    ],
+    "name": "psyche_reset",
+    "summary": "Reset stanu",
+    "description": null,
+    "tags": [
+      "psyche"
+    ]
+  },
+  {
+    "path": "/api/psyche/state",
+    "methods": [
+      "GET"
+    ],
+    "name": "psyche_state",
+    "summary": "Pobierz bieżący stan",
+    "description": null,
+    "tags": [
+      "psyche"
+    ]
+  },
+  {
+    "path": "/api/psyche/state",
+    "methods": [
+      "POST"
+    ],
+    "name": "psyche_state_set",
+    "summary": "Ustaw stan",
+    "description": null,
+    "tags": [
+      "psyche"
+    ]
+  },
+  {
+    "path": "/api/research/autonauka",
+    "methods": [
+      "POST"
+    ],
+    "name": "run_autonauka",
+    "summary": null,
+    "description": "🧠 AUTO-NAUKA Z WEB RESEARCH\n\nPełna pipeline:\n1. Wyszukiwanie w wielu źródłach (DDG, Wiki, SERPAPI, arXiv, S2)\n2. Scraping treści (Firecrawl lub fallback)\n3. Analiza semantyczna i embedding\n4. Generowanie odpowiedzi przez LLM\n5. Opcjonalnie: zapis do LTM\n\n**Przykład:**\n```json\n{\n  \"query\": \"Wyjaśnij teorię strun\",\n  \"topk\": 8,\n  \"user_id\": \"user123\",\n  \"save_to_ltm\": true\n}\n```",
+    "tags": [
+      "research"
+    ]
+  },
+  {
+    "path": "/api/research/search",
+    "methods": [
+      "POST"
+    ],
+    "name": "web_search",
+    "summary": null,
+    "description": "🌐 OGÓLNE WYSZUKIWANIE W INTERNECIE\n\nPrzeszukuje wiele źródeł:\n- DuckDuckGo (zawsze)\n- Wikipedia (zawsze)\n- SERPAPI/Google (jeśli klucz API)\n- arXiv (tryb full/grounded)\n- Semantic Scholar (tryb full/grounded)\n\n**Przykład:**\n```json\n{\n  \"query\": \"czym jest kwantowa superpozycja\",\n  \"topk\": 5,\n  \"mode\": \"full\"\n}\n```",
+    "tags": [
+      "research"
+    ]
+  },
+  {
+    "path": "/api/research/sources",
+    "methods": [
+      "GET"
+    ],
+    "name": "available_sources",
+    "summary": null,
+    "description": "📚 LISTA DOSTĘPNYCH ŹRÓDEŁ\n\nZwraca informacje o dostępnych źródłach danych i ich statusie.",
+    "tags": [
+      "research"
+    ]
+  },
+  {
+    "path": "/api/research/test",
+    "methods": [
+      "GET"
+    ],
+    "name": "test_research",
+    "summary": null,
+    "description": "🧪 TEST WEB SEARCH\n\nTestuje czy research działa poprawnie.",
+    "tags": [
+      "research"
+    ]
+  },
+  {
+    "path": "/api/search/compare",
+    "methods": [
+      "POST"
+    ],
+    "name": "compare_methods",
+    "summary": null,
+    "description": "🔬 PORÓWNANIE METOD WYSZUKIWANIA\n\nWykonuje wyszukiwanie wszystkimi 3 metodami oddzielnie\ni pokazuje różnice w wynikach.",
+    "tags": []
+  },
+  {
+    "path": "/api/search/hybrid",
+    "methods": [
+      "POST"
+    ],
+    "name": "hybrid_search",
+    "summary": null,
+    "description": "🔥 ZAAWANSOWANE WYSZUKIWANIE HYBRYDOWE 🔥\n\nŁączy 3 metody:\n- FTS5 Full-Text Search (40%)\n- Semantic Vector Search (35%)\n- Fuzzy String Matching (25%)\n\nZwraca najlepsze wyniki z breakdown score'ów i timestamp.",
+    "tags": []
+  },
+  {
+    "path": "/api/search/stats",
+    "methods": [
+      "GET"
+    ],
+    "name": "search_stats",
+    "summary": null,
+    "description": "Statystyki pamięci użytkownika",
+    "tags": []
+  },
+  {
+    "path": "/api/search/test",
+    "methods": [
+      "GET"
+    ],
+    "name": "test_search",
+    "summary": null,
+    "description": "Quick test endpoint - GET request dla łatwego testowania\n\nExample: /api/search/test?q=python&limit=10",
+    "tags": []
+  },
+  {
+    "path": "/api/search/widget",
+    "methods": [
+      "GET"
+    ],
+    "name": "search_widget",
+    "summary": null,
+    "description": "🎨 FRONTEND WIDGET - Interaktywny interfejs do testowania hybrid search",
+    "tags": []
+  },
+  {
+    "path": "/api/stt/file/{tenant}/{name}",
+    "methods": [
+      "GET"
+    ],
+    "name": "stt_file",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "stt"
+    ]
+  },
+  {
+    "path": "/api/stt/providers",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_stt_providers",
+    "summary": null,
+    "description": "Lista dostępnych providerów STT",
+    "tags": [
+      "speech"
+    ]
+  },
+  {
+    "path": "/api/stt/transcribe",
+    "methods": [
+      "POST"
+    ],
+    "name": "transcribe",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "stt"
+    ]
+  },
+  {
+    "path": "/api/stt/transcribe",
+    "methods": [
+      "POST"
+    ],
+    "name": "transcribe_audio",
+    "summary": null,
+    "description": "Zamień audio na tekst (Speech-to-Text)\n\nWspierane formaty: mp3, wav, m4a, webm, ogg\nMax size: 25MB",
+    "tags": [
+      "speech"
+    ]
+  },
+  {
+    "path": "/api/suggestions/analyze",
+    "methods": [
+      "POST"
+    ],
+    "name": "analyze_message",
+    "summary": "Analizuje wiadomość bez generowania sugestii",
+    "description": "Analizuje wiadomość bez generowania sugestii.\n\nArgs:\n    data: Zawiera:\n        - user_id: ID użytkownika\n        - message: Wiadomość użytkownika\n        \nReturns:\n    Wyniki analizy",
+    "tags": [
+      "Proactive Suggestions"
+    ]
+  },
+  {
+    "path": "/api/suggestions/generate",
+    "methods": [
+      "POST"
+    ],
+    "name": "generate_suggestions",
+    "summary": "Generuje proaktywne sugestie dla wiadomości",
+    "description": "Generuje proaktywne sugestie dla wiadomości użytkownika.\n\nArgs:\n    data: Zawiera:\n        - user_id: ID użytkownika\n        - message: Wiadomość użytkownika\n        - conversation_history: (opcjonalne) Historia konwersacji\n        - last_ai_response: (opcjonalne) Ostatnia odpowiedź AI\n        - force: (opcjonalne) Wymuś sugestię\n        \nReturns:\n    Lista sugestii",
+    "tags": [
+      "Proactive Suggestions"
+    ]
+  },
+  {
+    "path": "/api/suggestions/inject",
+    "methods": [
+      "POST"
+    ],
+    "name": "inject_suggestions",
+    "summary": "Dodaje sugestie do promptu",
+    "description": "Dodaje sugestie do promptu systemowego.\n\nArgs:\n    data: Zawiera:\n        - base_prompt: Bazowy prompt systemowy\n        - suggestions: Lista sugestii\n        \nReturns:\n    Prompt z dodanymi sugestiami",
+    "tags": [
+      "Proactive Suggestions"
+    ]
+  },
+  {
+    "path": "/api/suggestions/stats",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_stats",
+    "summary": "Pobiera statystyki sugestii",
+    "description": "Pobiera statystyki generowania sugestii.\n\nReturns:\n    Statystyki sugestii",
+    "tags": [
+      "Proactive Suggestions"
+    ]
+  },
+  {
+    "path": "/api/travel/attractions/{city}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_attractions",
+    "summary": null,
+    "description": "🏛️ Szybki dostęp do atrakcji",
+    "tags": []
+  },
+  {
+    "path": "/api/travel/geocode",
+    "methods": [
+      "GET"
+    ],
+    "name": "geocode_city",
+    "summary": null,
+    "description": "📍 Pobierz współrzędne geograficzne miasta\n\nUżywa OpenTripMap API do geocodingu\n\nPrzykład:\n```\nGET /api/travel/geocode?city=Gdańsk\n```\n\nZwraca:\n```json\n{\n    \"ok\": true,\n    \"city\": \"Gdańsk\",\n    \"coordinates\": {\n        \"lat\": 54.352,\n        \"lon\": 18.646\n    }\n}\n```",
+    "tags": []
+  },
+  {
+    "path": "/api/travel/hotels/{city}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_hotels",
+    "summary": null,
+    "description": "🏨 Szybki dostęp do hoteli",
+    "tags": []
+  },
+  {
+    "path": "/api/travel/restaurants/{city}",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_restaurants",
+    "summary": null,
+    "description": "🍽️ Szybki dostęp do restauracji",
+    "tags": []
+  },
+  {
+    "path": "/api/travel/search",
+    "methods": [
+      "GET"
+    ],
+    "name": "search_travel",
+    "summary": null,
+    "description": "🗺️ Wyszukaj miejsca w mieście\n\nParametry:\n- city: nazwa miasta (np. \"Warszawa\", \"Kraków\")\n- what: co szukamy\n  - \"attractions\" - atrakcje turystyczne\n  - \"hotels\" - hotele\n  - \"restaurants\" - restauracje i kawiarnie\n\nŹródła:\n- OpenTripMap API (geocoding)\n- SERPAPI Google Maps (hotele, atrakcje)\n- Overpass API / OpenStreetMap (restauracje)\n\nPrzykład:\n```\nGET /api/travel/search?city=Kraków&what=restaurants\n```",
+    "tags": []
+  },
+  {
+    "path": "/api/travel/trip-plan",
+    "methods": [
+      "GET"
+    ],
+    "name": "plan_trip",
+    "summary": null,
+    "description": "🗓️ Zaplanuj wycieczkę (AI-powered)\n\nGeneruje plan wycieczki bazując na:\n- Długość pobytu (dni)\n- Zainteresowania\n- Dostępne atrakcje\n\nPrzykład:\n```\nGET /api/travel/trip-plan?city=Kraków&days=2&interests=culture,food\n```",
+    "tags": []
+  },
+  {
+    "path": "/api/tts/speak",
+    "methods": [
+      "POST"
+    ],
+    "name": "speak",
+    "summary": null,
+    "description": "Generuje audio z tekstu\n\nBody:\n    {\n        \"text\": \"Tekst do wypowiedzenia\",\n        \"voice\": \"rachel\"  // opcjonalnie: rachel, antoni, adam, bella\n    }\n\nReturns:\n    audio/mpeg (MP3)",
+    "tags": [
+      "tts"
+    ]
+  },
+  {
+    "path": "/api/tts/voices",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_voices",
+    "summary": null,
+    "description": "Lista dostępnych głosów",
+    "tags": [
+      "tts"
+    ]
+  },
+  {
+    "path": "/api/vision/describe",
+    "methods": [
+      "POST"
+    ],
+    "name": "describe",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "vision"
+    ]
+  },
+  {
+    "path": "/api/vision/ocr",
+    "methods": [
+      "POST"
+    ],
+    "name": "ocr",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "vision"
+    ]
+  },
+  {
+    "path": "/api/voice/file/{tenant}/{name}",
+    "methods": [
+      "GET"
+    ],
+    "name": "voice_file",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "voice"
+    ]
+  },
+  {
+    "path": "/api/voice/tts",
+    "methods": [
+      "POST"
+    ],
+    "name": "tts",
+    "summary": null,
+    "description": null,
+    "tags": [
+      "voice"
+    ]
+  },
+  {
+    "path": "/api/writer/article/masterpiece",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_masterpiece_article",
+    "summary": null,
+    "description": "Generuj mistrzowski artykuł\n\nArgs:\n    request: Parametry artykułu\n\nReturns:\n    Kompletny artykuł",
+    "tags": [
+      "writing"
+    ]
+  },
+  {
+    "path": "/api/writer/auction/knowledge",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_auction_knowledge",
+    "summary": null,
+    "description": "Pobierz wiedzę aukcyjną z bazy\n\nReturns:\n    Wiedza aukcyjna pogrupowana tematycznie",
+    "tags": [
+      "writing"
+    ]
+  },
+  {
+    "path": "/api/writer/auction/learn",
+    "methods": [
+      "POST"
+    ],
+    "name": "learn_auction_knowledge",
+    "summary": null,
+    "description": "Naucz system wiedzy aukcyjnej\n\nArgs:\n    request: Elementy wiedzy aukcyjnej do nauczenia\n\nReturns:\n    Status nauki",
+    "tags": [
+      "writing"
+    ]
+  },
+  {
+    "path": "/api/writer/auction/pro",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_auction_pro_description",
+    "summary": null,
+    "description": "Zaawansowane generowanie opisu aukcji\n\nArgs:\n    request: Parametry zaawansowanego opisu aukcji\n\nReturns:\n    Profesjonalny opis aukcji",
+    "tags": [
+      "writing"
+    ]
+  },
+  {
+    "path": "/api/writer/auction/tags",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_auction_tags",
+    "summary": null,
+    "description": "Sugeruj tagi dla aukcji\n\nArgs:\n    title: Tytuł aukcji\n    description: Opis aukcji\n\nReturns:\n    Sugerowane tagi",
+    "tags": [
+      "writing"
+    ]
+  },
+  {
+    "path": "/api/writer/creative",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_creative_text",
+    "summary": null,
+    "description": "Generuj kreatywny tekst na zadany temat\n\nArgs:\n    request: Parametry tekstu kreatywnego\n\nReturns:\n    Wygenerowany tekst kreatywny",
+    "tags": [
+      "writing"
+    ]
+  },
+  {
+    "path": "/api/writer/fashion/analyze",
+    "methods": [
+      "POST"
+    ],
+    "name": "analyze_fashion_content",
+    "summary": null,
+    "description": "Analizuj tekst pod kątem mody i stylu\n\nArgs:\n    text: Tekst do analizy\n\nReturns:\n    Analiza modowa tekstu",
+    "tags": [
+      "writing"
+    ]
+  },
+  {
+    "path": "/api/writer/product",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_product_description",
+    "summary": null,
+    "description": "Generuj opis produktu dla różnych platform\n\nArgs:\n    request: Parametry opisu produktu\n\nReturns:\n    Opis produktu",
+    "tags": [
+      "writing"
+    ]
+  },
+  {
+    "path": "/api/writer/sales/masterpiece",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_sales_masterpiece",
+    "summary": null,
+    "description": "Generuj mistrzowski tekst sprzedażowy\n\nArgs:\n    request: Parametry tekstu sprzedażowego\n\nReturns:\n    Profesjonalny tekst sprzedażowy",
+    "tags": [
+      "writing"
+    ]
+  },
+  {
+    "path": "/api/writer/social",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_social_media_post",
+    "summary": null,
+    "description": "Generuj posty na media społecznościowe\n\nArgs:\n    request: Parametry posta społecznościowego\n\nReturns:\n    Lista wariantów postów",
+    "tags": [
+      "writing"
+    ]
+  },
+  {
+    "path": "/api/writer/status",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_writer_status",
+    "summary": null,
+    "description": "Status modułu Writer Pro\n\nReturns:\n    Informacje o dostępności funkcji pisarskich",
+    "tags": [
+      "writing"
+    ]
+  },
+  {
+    "path": "/api/writer/technical/masterpiece",
+    "methods": [
+      "POST"
+    ],
+    "name": "create_technical_masterpiece",
+    "summary": null,
+    "description": "Generuj mistrzowską dokumentację techniczną\n\nArgs:\n    request: Parametry dokumentacji technicznej\n\nReturns:\n    Kompletna dokumentacja techniczna",
+    "tags": [
+      "writing"
+    ]
+  },
+  {
+    "path": "/api/writer/templates",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_writing_templates",
+    "summary": null,
+    "description": "Pobierz dostępne szablony pisarskie\n\nReturns:\n    Lista dostępnych szablonów i ich parametrów",
+    "tags": [
+      "writing"
+    ]
+  },
+  {
+    "path": "/api/writing/auction",
+    "methods": [
+      "POST"
+    ],
+    "name": "auction_description",
+    "summary": null,
+    "description": "Generator opisów aukcyjnych.",
+    "tags": []
+  },
+  {
+    "path": "/api/writing/auction/kb/fetch",
+    "methods": [
+      "GET"
+    ],
+    "name": "fetch_auction_kb",
+    "summary": null,
+    "description": "Pobierz bazę wiedzy aukcyjnej.",
+    "tags": []
+  },
+  {
+    "path": "/api/writing/auction/kb/learn",
+    "methods": [
+      "POST"
+    ],
+    "name": "learn_auction_kb",
+    "summary": null,
+    "description": "Naucz bazę wiedzy aukcyjnej nowych elementów.",
+    "tags": []
+  },
+  {
+    "path": "/api/writing/auction/pro",
+    "methods": [
+      "POST"
+    ],
+    "name": "auction_pro_description",
+    "summary": null,
+    "description": "Generator profesjonalnych opisów aukcyjnych z wersją A/B.",
+    "tags": []
+  },
+  {
+    "path": "/api/writing/auction/suggest-tags",
+    "methods": [
+      "POST"
+    ],
+    "name": "suggest_auction_tags",
+    "summary": null,
+    "description": "Sugeruj tagi dla aukcji.",
+    "tags": []
+  },
+  {
+    "path": "/api/writing/creative",
+    "methods": [
+      "POST"
+    ],
+    "name": "creative_writing",
+    "summary": null,
+    "description": "Kreatywne pisanie artykułów, esejów i tekstów.",
+    "tags": []
+  },
+  {
+    "path": "/api/writing/fashion/analyze",
+    "methods": [
+      "POST"
+    ],
+    "name": "fashion_analysis",
+    "summary": null,
+    "description": "Analiza tekstu pod kątem elementów mody.",
+    "tags": []
+  },
+  {
+    "path": "/api/writing/masterpiece/article",
+    "methods": [
+      "POST"
+    ],
+    "name": "masterpiece_article",
+    "summary": null,
+    "description": "Generator mistrzowskich artykułów.",
+    "tags": []
+  },
+  {
+    "path": "/api/writing/masterpiece/sales",
+    "methods": [
+      "POST"
+    ],
+    "name": "sales_masterpiece",
+    "summary": null,
+    "description": "Generator mistrzowskich tekstów sprzedażowych.",
+    "tags": []
+  },
+  {
+    "path": "/api/writing/masterpiece/technical",
+    "methods": [
+      "POST"
+    ],
+    "name": "technical_masterpiece",
+    "summary": null,
+    "description": "Generator mistrzowskich wyjaśnień technicznych.",
+    "tags": []
+  },
+  {
+    "path": "/api/writing/social",
+    "methods": [
+      "POST"
+    ],
+    "name": "social_media_post",
+    "summary": null,
+    "description": "Generator postów do mediów społecznościowych.",
+    "tags": []
+  },
+  {
+    "path": "/api/writing/vinted",
+    "methods": [
+      "POST"
+    ],
+    "name": "vinted_description",
+    "summary": null,
+    "description": "Generator opisów dla Vinted.",
+    "tags": []
+  },
+  {
+    "path": "/app",
+    "methods": [
+      "GET"
+    ],
+    "name": "serve_frontend",
+    "summary": null,
+    "description": "Główny interfejs czatu - Angular SPA lub WebUI",
+    "tags": []
+  },
+  {
+    "path": "/balance",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_balance",
+    "summary": null,
+    "description": "Sprawdź saldo 2captcha",
+    "tags": []
+  },
+  {
+    "path": "/chat",
+    "methods": [
+      "GET"
+    ],
+    "name": "serve_frontend",
+    "summary": null,
+    "description": "Główny interfejs czatu - Angular SPA lub WebUI",
+    "tags": []
+  },
+  {
+    "path": "/docs",
+    "methods": [
+      "GET"
+    ],
+    "name": "swagger_ui_html",
+    "summary": null,
+    "description": null,
+    "tags": []
+  },
+  {
+    "path": "/docs/oauth2-redirect",
+    "methods": [
+      "GET"
+    ],
+    "name": "swagger_ui_redirect",
+    "summary": null,
+    "description": null,
+    "tags": []
+  },
+  {
+    "path": "/favicon.ico",
+    "methods": [
+      "GET"
+    ],
+    "name": "serve_favicon",
+    "summary": null,
+    "description": "Favicon",
+    "tags": []
+  },
+  {
+    "path": "/health",
+    "methods": [
+      "GET"
+    ],
+    "name": "health",
+    "summary": null,
+    "description": "Health check",
+    "tags": []
+  },
+  {
+    "path": "/health",
+    "methods": [
+      "GET"
+    ],
+    "name": "health_check",
+    "summary": null,
+    "description": "Health check dla Prometheus",
+    "tags": []
+  },
+  {
+    "path": "/manifest.webmanifest",
+    "methods": [
+      "GET"
+    ],
+    "name": "serve_manifest",
+    "summary": null,
+    "description": "Web App Manifest",
+    "tags": []
+  },
+  {
+    "path": "/metrics",
+    "methods": [
+      "GET"
+    ],
+    "name": "_metrics",
+    "summary": null,
+    "description": null,
+    "tags": []
+  },
+  {
+    "path": "/metrics",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_prometheus_metrics",
+    "summary": null,
+    "description": "Endpoint dla Prometheus - metryki w formacie tekstowym",
+    "tags": []
+  },
+  {
+    "path": "/ngsw-worker.js",
+    "methods": [
+      "GET"
+    ],
+    "name": "serve_service_worker",
+    "summary": null,
+    "description": "Service worker (Angular PWA lub legacy).",
+    "tags": []
+  },
+  {
+    "path": "/openapi.json",
+    "methods": [
+      "GET"
+    ],
+    "name": "openapi",
+    "summary": null,
+    "description": null,
+    "tags": []
+  },
+  {
+    "path": "/redoc",
+    "methods": [
+      "GET"
+    ],
+    "name": "redoc_html",
+    "summary": null,
+    "description": null,
+    "tags": []
+  },
+  {
+    "path": "/solve",
+    "methods": [
+      "POST"
+    ],
+    "name": "solve_captcha",
+    "summary": null,
+    "description": "Rozwiąż captcha przez 2captcha API",
+    "tags": []
+  },
+  {
+    "path": "/stats",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_stats",
+    "summary": null,
+    "description": "Statystyki w formacie JSON",
+    "tags": []
+  },
+  {
+    "path": "/status",
+    "methods": [
+      "GET"
+    ],
+    "name": "api_status",
+    "summary": null,
+    "description": "Status API",
+    "tags": []
+  },
+  {
+    "path": "/sw.js",
+    "methods": [
+      "GET"
+    ],
+    "name": "serve_service_worker",
+    "summary": null,
+    "description": "Service worker (Angular PWA lub legacy).",
+    "tags": []
+  },
+  {
+    "path": "/webui/",
+    "methods": [
+      "GET"
+    ],
+    "name": "webui_index",
+    "summary": null,
+    "description": null,
+    "tags": []
+  },
+  {
+    "path": "/{full_path:path}",
+    "methods": [
+      "GET"
+    ],
+    "name": "angular_catch_all",
+    "summary": null,
+    "description": "Przekieruj wszystkie nieznane ścieżki do Angular SPA (dla routingu)",
+    "tags": []
+  }
+]

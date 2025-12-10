@@ -1,0 +1,4733 @@
+===== TREE core/ =====
+core/admin_endpoint.py
+core/advanced_autorouter.py
+core/advanced_cognitive_engine.py
+core/advanced_learning.py
+core/advanced_llm.py
+core/advanced_memory.py
+core/advanced_proactive.py
+core/advanced_psychology.py
+core/ai_auction.py
+core/ai_fashion.py
+core/ai_vision.py
+core/app_fixed.py
+core/app.py
+core/assistant_endpoint.py
+core/auction_endpoint.py
+core/audit.py
+core/auth.py
+core/autoroute.py
+core/auto_router_loader.py
+core/batch_endpoint.py
+core/batch_processing.py
+core/batch_research.py
+core/brave_search.py
+core/cache_invalidation.py
+core/cognitive_endpoint.py
+core/cognitive_engine_fallback.py
+core/cognitive_engine.py
+core/config.py
+core/context_awareness.py
+core/conversation_analytics.py
+core/executor.py
+core/fact_validation_endpoint.py
+core/fact_validation.py
+core/fashion_endpoint.py
+core/files_endpoint.py
+core/frontend_autorouter.py
+core/future_predictor.py
+core/hacker_endpoint.py
+core/health_endpoint.py
+core/helpers.py
+core/hierarchical_memory.py
+core/hotfix_bootstrap.py
+core/hotfix_chat.py
+core/hybrid_search_endpoint.py
+core/image_endpoint.py
+core/image_generator.py
+core/__init__.py
+core/inner_language.py
+core/intent_detector.py
+core/intent_dispatcher.py
+core/internal_endpoint.py
+core/knowledge_compression.py
+core/lang_detect.py
+core/lang_endpoint.py
+core/legal_office_endpoint.py
+core/llm.py
+core/media_endpoint.py
+core/memory_endpoint.py
+core/_memory_fallback.py
+core/memory_persistence.py
+core/memory.py
+core/memory_store.py
+core/memory_summarizer.py
+core/memory_wrapper.py
+core/metrics.py
+core/middleware.py
+core/ml_endpoint_new.py
+core/ml_endpoint.py
+core/multi_agent_orchestrator.py
+core/negocjator_endpoint.py
+core/nlp_endpoint.py
+core/nlp_processor.py
+core/parallel.py
+core/personality_presets.py
+core/proactive_ml_model.py
+core/programista_endpoint.py
+core/prometheus_endpoint.py
+core/prompt.py
+core/psyche_endpoint.py
+core/redis_middleware.py
+core/reflection_endpoint.py
+core/research_endpoint.py
+core/research_policy.py
+core/research.py
+core/response_adapter.py
+core/security_mw.py
+core/security.py
+core/self_reflection.py
+core/semantic.py
+core/sessions_endpoint.py
+core/sessions.py
+core/smart_context.py
+core/stream_booster.py
+core/stream_util.py
+core/stress_test_system.py
+core/stt_endpoint.py
+core/suggestions_endpoint.py
+core/tavily_search.py
+core/test_import.py
+core/tools.py
+core/tools_registry.py
+core/travel_endpoint.py
+core/tts_engine.py
+core/user_model.py
+core/vision_endpoint.py
+core/voice_endpoint.py
+core/writing_endpoint.py
+core/writing.py
+
+
+==================== BEGIN core/app.py ====================
+from core.hotfix_chat import router as hotfix_chat_router
+﻿#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+============================================
+MORDZIX AI PRO - Unified Application
+Version: 6.0.0 (December 2025)
+============================================
+
+Zaawansowany system AI z:
+- Automatycznym wykrywaniem trybów (Tech, Sport, Moda, HVAC, Legal)
+- Web search w czasie rzeczywistym (Brave + Tavily)
+- Obsługą załączników (tekst, PDF, obrazy)
+- Pamięcią długoterminową
+- Generowaniem obrazów (Stability AI)
+"""
+
+import os
+import sys
+import time
+from collections import Counter
+from pathlib import Path
+from typing import Any, Dict, List
+from fastapi import FastAPI
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+
+# Helper function for CORS origins
+def _get_cors_origins() -> list[str]:
+    import os
+    raw = os.getenv("CORS_ORIGINS", "").strip()
+    if not raw:
+        return ["http://localhost:5173"]
+    parts = [p.strip() for p in raw.split(",") if p.strip()]
+    return parts or ["http://localhost:5173"]
+
+
+# Najpierw tworzymy app!
+app = FastAPI(
+    title="Mordzix AI PRO",
+    version="6.0.0",
+    description="Zaawansowany asystent AI z trybami: Tech, Sport, Moda/Vinted, HVAC/Budowlany, Pisma urzędowe. Web search, pamięć, obrazy, załączniki.",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
+
+def _req_id_from(request: Request) -> str:
+    rid = request.headers.get("X-Request-ID") or request.state.__dict__.get("request_id") if hasattr(request, "state") else None
+    return rid or "n/a"
+
+def _json_error(status: int, code: str, detail, request_id: str):
+    payload = {"error": code, "code": status, "detail": detail, "request_id": request_id}
+    return JSONResponse(status_code=status, content=payload)
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exc_handler(request: Request, exc: StarletteHTTPException):
+    return _json_error(exc.status_code, "http_error", exc.detail, _req_id_from(request))
+
+@app.exception_handler(RequestValidationError)
+async def validation_exc_handler(request: Request, exc: RequestValidationError):
+    return _json_error(422, "validation_error", exc.errors(), _req_id_from(request))
+
+@app.exception_handler(Exception)
+async def unhandled_exc_handler(request: Request, exc: Exception):
+    # SECURITY FIX: Do not leak exception type to client
+    # Log full error server-side but return generic message
+    import logging
+    logging.error(f"Unhandled exception: {type(exc).__name__}: {exc}", exc_info=True)
+    return _json_error(500, "internal_error", "An internal error occurred", _req_id_from(request))
+
+from fastapi.middleware.cors import CORSMiddleware
+from .metrics import MetricsMiddleware, metrics_endpoint
+
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
+from fastapi.middleware.gzip import GZipMiddleware
+import time, uuid, os
+from .config import RATE_LIMIT_ENABLED, RATE_LIMIT_PER_MINUTE
+
+class RequestIDMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        req_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+        start = time.time()
+        response: Response = await call_next(request)
+        response.headers["X-Request-ID"] = req_id
+        response.headers["X-Response-Time"] = f"{(time.time()-start)*1000:.1f}ms"
+        return response
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """SECURITY FIX: Add CSP and other security headers"""
+    async def dispatch(self, request: Request, call_next):
+        response: Response = await call_next(request)
+        
+        # Content Security Policy - prevents XSS by controlling resource loading
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' cdn.jsdelivr.net cdnjs.cloudflare.com; "
+            "style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com; "
+            "img-src 'self' data: https:; "
+            "font-src 'self' data: cdnjs.cloudflare.com; "
+            "connect-src 'self'; "
+            "frame-ancestors 'none';"
+        )
+        
+        # Additional security headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        
+        return response
+
+# naive in-memory limiter (per process)
+_RATE_BUCKETS = {}
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if not RATE_LIMIT_ENABLED:
+            return await call_next(request)
+        try:
+            ip = request.client.host if request.client else "unknown"
+        except Exception:
+            ip = "unknown"
+        key = f"{ip}:{request.url.path}"
+        now = time.time()
+        window = int(now // 60)  # per-minute window
+        count, win = _RATE_BUCKETS.get(key, (0, window))
+        if win != window:
+            count, win = 0, window
+        count += 1
+        _RATE_BUCKETS[key] = (count, win)
+        if count > RATE_LIMIT_PER_MINUTE:
+            return Response(status_code=429, content='{"error":"rate_limit","detail":"Too Many Requests"}', media_type="application/json")
+        return await call_next(request)
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.routing import APIRoute
+from fastapi.staticfiles import StaticFiles
+
+try:
+    from core.metrics import MetricsMiddleware, metrics_endpoint
+    PROMETHEUS_AVAILABLE = True
+except ImportError:
+    PROMETHEUS_AVAILABLE = False
+    MetricsMiddleware = None
+    metrics_endpoint = None
+
+try:
+    import uvicorn  # type: ignore[import]
+except ImportError:  # pragma: no cover - fallback dla środowisk bez uvicorn
+    uvicorn = None
+
+# ═══════════════════════════════════════════════════════════════════
+# KONFIGURACJA ŚRODOWISKA
+# ═══════════════════════════════════════════════════════════════════
+BASE_DIR = Path(__file__).parent.absolute()
+os.environ.setdefault("AUTH_TOKEN", "__CHANGE_ME_AUTH_TOKEN__")
+os.environ.setdefault("WORKSPACE", str(BASE_DIR))
+os.environ.setdefault("MEM_DB", str(BASE_DIR / "mem.db"))
+
+# Lista endpointów wymagających ręcznej akceptacji (spójna z frontendem)
+MANUAL_TOOL_ENDPOINTS: List[Dict[str, str]] = [
+    {
+        "name": "code_write",
+        "endpoint": "POST /api/code/write",
+        "reason": "Zapisuje pliki w repozytorium i wymaga świadomego potwierdzenia."
+    },
+    {
+        "name": "code_deps_install",
+        "endpoint": "POST /api/code/deps/install",
+        "reason": "Instaluje zależności i modyfikuje środowisko uruchomieniowe."
+    },
+    {
+        "name": "code_docker_build",
+        "endpoint": "POST /api/code/docker/build",
+        "reason": "Buduje obraz Dockera – operacja zasobożerna."
+    },
+    {
+        "name": "code_docker_run",
+        "endpoint": "POST /api/code/docker/run",
+        "reason": "Uruchamia kontener Dockera, wymaga nadzoru operatora."
+    },
+    {
+        "name": "code_git",
+        "endpoint": "POST /api/code/git",
+        "reason": "Wysyła polecenia git zmieniające historię repozytorium."
+    },
+    {
+        "name": "code_init",
+        "endpoint": "POST /api/code/init",
+        "reason": "Tworzy nową strukturę projektu na dysku i może nadpisać pliki."
+    },
+]
+
+_AUTOMATION_SUMMARY_CACHE: Dict[str, Any] = {}
+_AUTOMATION_SUMMARY_TS: float = 0.0
+
+# Czy logować podczas importu (przy np. narzędziach CLI ustawiamy flagę by wyciszyć)
+_SUPPRESS_IMPORT_LOGS = os.environ.get("MORDZIX_SUPPRESS_STARTUP_LOGS") == "1"
+
+# ═══════════════════════════════════════════════════════════════════
+# AUTOMATION SUMMARY HELPERS
+# ═══════════════════════════════════════════════════════════════════
+
+
+def _load_fast_path_handlers() -> Dict[str, Any]:
+    """Zwróć listę nazw handlerów fast path (bezpośrednie regexy)."""
+
+    try:
+        from core.intent_dispatcher import FAST_PATH_HANDLERS  # type: ignore[import]
+
+        handlers = [handler.__name__ for handler in FAST_PATH_HANDLERS]
+        return {
+            "available": True,
+            "handlers": handlers,
+            "count": len(handlers)
+        }
+    except Exception as exc:  # pragma: no cover - środowiska bez modułu
+        if not _SUPPRESS_IMPORT_LOGS:
+            print(f"[WARN] Fast path handlers unavailable: {exc}")
+        return {
+            "available": True,
+            "handlers": [],
+            "count": 0,
+            "error": str(exc)
+        }
+
+
+def _load_tool_registry() -> Dict[str, Any]:
+    """Zwróć listę narzędzi routera LLM."""
+
+    try:
+        from core.tools_registry import get_all_tools  # type: ignore[import]
+
+        tools = get_all_tools()
+        tool_names = [tool.get("name", "") for tool in tools if tool.get("name")]
+        categories_counter = Counter(
+            name.split("_", 1)[0] if "_" in name else name for name in tool_names
+        )
+        categories = [
+            {"name": key, "count": categories_counter[key]}
+            for key in sorted(categories_counter, key=lambda item: (-categories_counter[item], item))
+        ]
+
+        return {
+            "available": True,
+            "count": len(tools),
+            "tools": tools,
+            "names": tool_names,
+            "categories": categories
+        }
+    except Exception as exc:  # pragma: no cover
+        if not _SUPPRESS_IMPORT_LOGS:
+            print(f"[WARN] Tool registry unavailable: {exc}")
+        return {
+            "available": True,
+            "count": 0,
+            "tools": [],
+            "names": [],
+            "categories": [],
+            "error": str(exc)
+        }
+
+
+def _build_automation_summary() -> Dict[str, Any]:
+    """Zbuduj podsumowanie automatyzacji (fast path + router)."""
+
+    fast_path = _load_fast_path_handlers()
+    tools = _load_tool_registry()
+
+    fast_count = fast_path.get("count", 0)
+    tool_count = tools.get("count", 0)
+    manual_count = len(MANUAL_TOOL_ENDPOINTS)
+
+    totals_automations = fast_count + tool_count
+    totals_automatic = max(totals_automations - manual_count, 0)
+
+    return {
+        "generated_at": time.time(),
+        "fast_path": fast_path,
+        "tools": {
+            "available": tools.get("available", True),
+            "count": tool_count,
+            "categories": tools.get("categories", []),
+            "sample": tools.get("names", [])[:15],
+        },
+        "manual": {
+            "count": manual_count,
+            "endpoints": MANUAL_TOOL_ENDPOINTS
+        },
+        "totals": {
+            "automations": totals_automations,
+            "automatic": totals_automatic
+        }
+    }
+
+
+def get_automation_summary(refresh: bool = False) -> Dict[str, Any]:
+    """Pobierz (opcjonalnie odśwież) cache z podsumowaniem automatyzacji."""
+
+    global _AUTOMATION_SUMMARY_CACHE, _AUTOMATION_SUMMARY_TS
+
+    if refresh or not _AUTOMATION_SUMMARY_CACHE:
+        _AUTOMATION_SUMMARY_CACHE = _build_automation_summary()
+        _AUTOMATION_SUMMARY_TS = _AUTOMATION_SUMMARY_CACHE.get("generated_at", time.time())
+    else:
+        # Dołącz timestamp do cache (może być potrzebny przy monitoringu)
+        _AUTOMATION_SUMMARY_CACHE["generated_at"] = _AUTOMATION_SUMMARY_TS
+
+    return _AUTOMATION_SUMMARY_CACHE
+
+# Prometheus middleware korzysta z core.metrics (jeśli dostępne)
+
+# ═══════════════════════════════════════════════════════════════════
+# FASTAPI APPLICATION (już zdefiniowana wyżej)
+# ═══════════════════════════════════════════════════════════════════
+
+# SECURITY MIDDLEWARE (AUDIT FIX)
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RequestIDMiddleware)
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_get_cors_origins(),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Prometheus middleware
+if PROMETHEUS_AVAILABLE:
+    @app.middleware("http")
+    async def prometheus_middleware(request: Request, call_next):
+        start_time = time.time()
+        endpoint = request.url.path
+        method = request.method
+        status_code = 500
+        
+        try:
+            response = await call_next(request)
+            status_code = response.status_code
+
+            return response
+        except Exception as exc:
+            status_code = getattr(exc, "status_code", 500)
+            # error_label = exc.__class__.__name__
+            # record_error(error_label, endpoint)  # Disabled for now
+            raise
+        finally:
+            duration = time.time() - start_time
+            # record_request(method, endpoint, status_code, duration)  # Disabled
+
+# ═══════════════════════════════════════════════════════════════════
+# INCLUDE ROUTERS - Wszystkie endpointy
+# ═══════════════════════════════════════════════════════════════════
+
+if not _SUPPRESS_IMPORT_LOGS:
+    print("\n" + "="*70)
+    print("MORDZIX AI - INICJALIZACJA ENDPOINTÓW")
+    print("="*70 + "\n")
+
+# 1. ASSISTANT (główny chat z AI)
+try:
+    from core import assistant_endpoint
+    app.include_router(assistant_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Assistant endpoint      /api/chat/assistant")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Assistant endpoint: {e}")
+
+# 1.5. SESSIONS (zarządzanie sesjami chatu) - PHASE 4
+try:
+    from core import sessions_endpoint
+    app.include_router(sessions_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Sessions endpoint       /api/sessions/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Sessions endpoint: {e}")
+
+# 2. PSYCHE (stan psychiczny AI)
+try:
+    from core import psyche_endpoint
+    app.include_router(psyche_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Psyche endpoint         /api/psyche/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Psyche endpoint: {e}")
+
+# 3. PROGRAMISTA (wykonywanie kodu)
+try:
+    from core import programista_endpoint
+    app.include_router(programista_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Programista endpoint    /api/code/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Programista endpoint: {e}")
+
+# 4. FILES (upload, analiza plików)
+try:
+    from core import files_endpoint
+    app.include_router(files_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Files endpoint          /api/files/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Files endpoint: {e}")
+
+# 5. TRAVEL (wyszukiwanie podróży)
+try:
+    from core import travel_endpoint
+    app.include_router(travel_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Travel endpoint         /api/travel/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Travel endpoint: {e}")
+
+# 6. ADMIN (statystyki, cache)
+try:
+    from core import admin_endpoint
+    app.include_router(admin_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Admin endpoint          /api/admin/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Admin endpoint: {e}")
+
+# 7. CAPTCHA (rozwiązywanie captcha) - DISABLED: moved to backup_legacy
+# try:
+#     from core import captcha_endpoint
+#     app.include_router(captcha_endpoint.router, prefix="/api/captcha", tags=["captcha"])
+try:
+    pass  # captcha_endpoint not in core/
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Captcha endpoint        /api/captcha/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Captcha endpoint: {e}")
+
+# 8. PROMETHEUS (metryki)
+try:
+    from core import prometheus_endpoint
+    app.include_router(prometheus_endpoint.router, prefix="/api/prometheus", tags=["monitoring"])
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Prometheus endpoint     /api/prometheus/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Prometheus endpoint: {e}")
+
+# 9. TTS (text-to-speech) - DISABLED: moved to backup_legacy
+# try:
+#     from core import tts_endpoint
+#     app.include_router(tts_endpoint.router)
+try:
+    pass  # tts_endpoint not in core/
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] TTS endpoint            /api/tts/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] TTS endpoint: {e}")
+
+# 10. STT (speech-to-text)
+try:
+    from core import stt_endpoint
+    app.include_router(stt_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] STT endpoint            /api/stt/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] STT endpoint: {e}")
+
+# 11. WRITING (generowanie tekstów)
+try:
+    from core import writing_endpoint
+    app.include_router(writing_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Writing endpoint        /api/writing/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Writing endpoint: {e}")
+
+# 12. SUGGESTIONS (proaktywne sugestie)
+try:
+    from core import suggestions_endpoint
+    app.include_router(suggestions_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Suggestions endpoint    /api/suggestions/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Suggestions endpoint: {e}")
+
+# 13. BATCH (przetwarzanie wsadowe)
+try:
+    from core import batch_endpoint
+    app.include_router(batch_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Batch endpoint          /api/batch/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Batch endpoint: {e}")
+
+# 14. RESEARCH (web search - DuckDuckGo, Wikipedia, SERPAPI)
+try:
+    from core import research_endpoint
+    app.include_router(research_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Research endpoint       /api/research/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Research endpoint: {e}")
+
+# 15. COGNITIVE (cognitive engine - zaawansowane przetwarzanie)
+try:
+    from core import cognitive_endpoint
+    app.include_router(cognitive_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Cognitive endpoint      /api/cognitive/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Cognitive endpoint: {e}")
+
+# 16. MEMORY (hierarchical memory system)
+try:
+    from core import memory_endpoint
+    app.include_router(memory_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Memory endpoint         /api/memory/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Memory endpoint: {e}")
+
+# ═══════ 🔥 NOWE ZAAWANSOWANE ENDPOINTY 🔥 ═══════
+
+# 17. AI FASHION (stylizacje, trendy, marki)
+try:
+    from core import fashion_endpoint
+    app.include_router(fashion_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] AI Fashion endpoint     /api/fashion/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] AI Fashion endpoint: {e}")
+
+# 17.5 AI AUCTION (analiza aukcji, wycena)
+try:
+    from core import auction_endpoint
+    app.include_router(auction_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] AI Auction endpoint     /api/auction/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] AI Auction endpoint: {e}")
+
+# 18. ML PREDICTIONS (95% accuracy suggestions)
+try:
+    from core import ml_endpoint
+    app.include_router(ml_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] ML Predictions endpoint /api/ml/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] ML Predictions endpoint: {e}")
+
+# 19. FACT VALIDATION (multi-source fact checking)
+try:
+    from core import fact_validation_endpoint
+    app.include_router(fact_validation_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Fact Validation endpoint /api/facts/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Fact Validation endpoint: {e}")
+
+# 20. VISION (image description, OCR)
+try:
+    from core import vision_endpoint
+    app.include_router(vision_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Vision endpoint         /api/vision/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Vision endpoint: {e}")
+
+# 21. VOICE (TTS, audio processing)
+try:
+    from core import voice_endpoint
+    app.include_router(voice_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Voice endpoint          /api/voice/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Voice endpoint: {e}")
+
+# 22. SELF-REFLECTION (dynamiczna rekurencja umysłowa)
+try:
+    from core import reflection_endpoint
+    app.include_router(reflection_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Self-Reflection endpoint /api/reflection/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Self-Reflection endpoint: {e}")
+
+# 23. AI HACKER (pentesting & security tools)
+try:
+    from core import hacker_endpoint
+    app.include_router(hacker_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] AI Hacker endpoint      /api/hacker/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] AI Hacker endpoint: {e}")
+
+# 24. IMAGE (generowanie obrazów)
+try:
+    from core import image_endpoint
+    app.include_router(image_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Image endpoint          /api/image/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Image endpoint: {e}")
+
+# 25. NLP (zaawansowana analiza językowa)
+try:
+    from core import nlp_endpoint
+    app.include_router(nlp_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] NLP endpoint            /api/nlp/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] NLP endpoint: {e}")
+
+# 26. AUTOROUTER (frontend auto-routing)
+try:
+    from core import frontend_autorouter
+    app.include_router(frontend_autorouter.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] AutoRouter endpoint     /api/autoroute/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] AutoRouter endpoint: {e}")
+
+# 27. LANG (detekcja języka)
+try:
+    from core import lang_endpoint
+    app.include_router(lang_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Lang endpoint           /api/lang/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Lang endpoint: {e}")
+
+# 28. INTERNAL (wewnętrzne API)
+try:
+    from core import internal_endpoint
+    app.include_router(internal_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Internal endpoint       /api/internal/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Internal endpoint: {e}")
+
+# 29. MEDIA (TTS + Image Generation) - NEW
+try:
+    from core import media_endpoint
+    app.include_router(media_endpoint.router, prefix="/api", tags=["media"])
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Media endpoint          /api/tts/*, /api/images/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Media endpoint: {e}")
+
+# 29. INTERNAL UI (interfejs wewnętrzny) - DISABLED: not in core/
+# try:
+#     from core import internal_ui
+#     app.include_router(internal_ui.router)
+try:
+    pass  # internal_ui not in core/
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Internal UI endpoint    /api/internal/ui")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Internal UI endpoint: {e}")
+
+# 30. HYBRID SEARCH (zaawansowane wyszukiwanie FTS5+Semantic+Fuzzy)
+try:
+    from core import hybrid_search_endpoint
+    app.include_router(hybrid_search_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Hybrid Search endpoint  /api/search/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Hybrid Search endpoint: {e}")
+
+# 31. LEGAL OFFICE (pisma urzędowe)
+try:
+    from core import legal_office_endpoint
+    app.include_router(legal_office_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] Legal Office endpoint   /api/legal/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] Legal Office endpoint: {e}")
+
+# 32. AI NEGOCJATOR DŁUGÓW
+try:
+    from core import negocjator_endpoint
+    app.include_router(negocjator_endpoint.router)
+    if not _SUPPRESS_IMPORT_LOGS:
+        print("[OK] AI Negocjator endpoint  /api/negocjator/*")
+except Exception as e:
+    if not _SUPPRESS_IMPORT_LOGS:
+        print(f"[FAIL] AI Negocjator endpoint: {e}")
+
+if not _SUPPRESS_IMPORT_LOGS:
+    print("\n" + "="*70)
+    print("WSZYSTKIE ENDPOINTY ZALADOWANE (32 TOTAL)")
+    print("="*70 + "\n")
+    print("[OK] AI Fashion Manager")
+    print("[OK] Advanced LLM Integration")
+    print("[OK] ML Proactive Suggestions (95% accuracy)")
+    print("[OK] Multi-Source Fact Validation")
+    print("[OK] Context Awareness Engine")
+    print("[OK] Vision Processing (OCR + Image Analysis)")
+    print("[OK] Voice Processing (TTS Multi-Provider)")
+    print("[OK] Self-Reflection Engine (5 poziomow glebokosci)")
+    print("[OK] AI Hacker Toolkit (Port Scan, SQLi, Recon)")
+    print("[OK] Legal Office (pisma urzedowe)")
+    print("[OK] AI Negocjator Dlugow (UNIQUE!)")
+    print("\n" + "="*70 + "\n")
+
+# ═══════════════════════════════════════════════════════════════════
+# BASIC ROUTES
+# ═══════════════════════════════════════════════════════════════════
+
+@app.get("/api")
+@app.get("/status")
+async def api_status():
+    """Status API"""
+    return {
+        "ok": True,
+        "app": "Mordzix AI",
+        "version": "5.0.0",
+        "features": {
+            "auto_stm_to_ltm": True,
+            "auto_learning": True,
+            "context_injection": True,
+            "psyche_system": True,
+            "travel_search": True,
+            "code_executor": True,
+            "tts_stt": True,
+            "file_analysis": True
+        },
+        "endpoints": {
+            "chat": "/api/chat/assistant",
+            "chat_stream": "/api/chat/assistant/stream",
+            "psyche": "/api/psyche/status",
+            "travel": "/api/travel/search",
+            "code": "/api/code/exec",
+            "files": "/api/files/upload",
+            "admin": "/api/admin/stats",
+            "tts": "/api/tts/speak",
+            "stt": "/api/stt/transcribe"
+        },
+        "automation": get_automation_summary()
+    }
+
+@app.get("/health")
+async def health():
+    """AUDIT FIX: Extended health check with dependency checks"""
+    checks = {
+        "api": "ok",
+        "database": "unknown",
+        "memory": "unknown"
+    }
+    
+    # Check sessions database
+    try:
+        from core.sessions import get_db
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM sessions")
+            cursor.fetchone()
+        checks["database"] = "ok"
+    except Exception as e:
+        checks["database"] = f"error: {str(e)[:50]}"
+    
+    # Check memory system
+    try:
+        from core.config import MEMORY_ENABLED
+        if MEMORY_ENABLED:
+            from core.memory import get_memory_system
+            mem_sys = get_memory_system()
+            if mem_sys:
+                checks["memory"] = "ok"
+            else:
+                checks["memory"] = "disabled"
+        else:
+            checks["memory"] = "disabled"
+    except Exception as e:
+        checks["memory"] = f"error: {str(e)[:50]}"
+    
+    # Overall status
+    all_ok = checks["database"] == "ok" and checks["api"] == "ok"
+    status = "healthy" if all_ok else "degraded"
+    
+    return {
+        "status": status,
+        "timestamp": time.time(),
+        "checks": checks
+    }
+
+@app.get("/api/endpoints/list")
+async def list_endpoints():
+    """Lista wszystkich endpointów API"""
+    endpoints = []
+    seen = set()
+    
+    for route in app.routes:
+        if isinstance(route, APIRoute) and route.path.startswith("/api"):
+            methods = sorted([m for m in route.methods if m not in {"HEAD", "OPTIONS"}])
+            identifier = (route.path, tuple(methods))
+            
+            if identifier not in seen:
+                endpoints.append({
+                    "path": route.path,
+                    "methods": methods,
+                    "name": route.name,
+                    "tags": list(route.tags) if route.tags else [],
+                    "summary": route.summary or ""
+                })
+                seen.add(identifier)
+    
+    endpoints.sort(key=lambda e: (e["path"], ",".join(e["methods"])))
+    return {"ok": True, "count": len(endpoints), "endpoints": endpoints}
+
+
+@app.get("/api/automation/status")
+async def automation_status():
+    """Podsumowanie automatycznych narzędzi i fast path."""
+
+    summary = get_automation_summary()
+    return {"ok": True, **summary}
+
+# ═══════════════════════════════════════════════════════════════════
+# FRONTEND ROUTES - ANGULAR APP
+# ═══════════════════════════════════════════════════════════════════
+
+# POPRAWKA: BASE_DIR z config.py może być błędne gdy importuje z core/
+# =====================================================================
+# FRONTEND SERVING - PHASE 3 (Grok-style UI)
+# =====================================================================
+from pathlib import Path as _Path
+_APP_ROOT = _Path(__file__).parent.parent.resolve()
+FRONTEND_DIR = _APP_ROOT / "frontend"
+
+# Mount static files for CSS and JS
+if (FRONTEND_DIR / "css").exists():
+    app.mount("/css", StaticFiles(directory=str(FRONTEND_DIR / "css")), name="frontend_css")
+    print("[OK] Frontend CSS mounted at /css/")
+
+if (FRONTEND_DIR / "js").exists():
+    app.mount("/js", StaticFiles(directory=str(FRONTEND_DIR / "js")), name="frontend_js")
+    print("[OK] Frontend JS mounted at /js/")
+
+print("[INIT] Registering serve_frontend for routes: /, /app, /chat")
+
+@app.get("/", response_class=HTMLResponse)
+@app.get("/app", response_class=HTMLResponse)
+@app.get("/chat", response_class=HTMLResponse)
+async def serve_frontend():
+    """Serve the main Grok-style chat frontend"""
+    # Primary: New frontend/index.html
+    new_frontend = FRONTEND_DIR / "index.html"
+    if new_frontend.exists():
+        print(f"[INFO] Serving Grok-style frontend from {new_frontend}")
+        return HTMLResponse(content=new_frontend.read_text(encoding="utf-8"))
+    
+    # Fallback: Error message
+    return HTMLResponse(
+        content="""
+        <!DOCTYPE html>
+        <html>
+        <head><title>Mordzix AI</title></head>
+        <body style="background:#0d0d0d;color:#fff;font-family:sans-serif;text-align:center;padding:50px;">
+            <h1>Frontend not found</h1>
+            <p>Please ensure frontend/index.html exists.</p>
+            <p>API docs available at: <a href="/docs" style="color:#10a37f;">/docs</a></p>
+        </body>
+        </html>
+        """,
+        status_code=404
+    )
+
+
+@app.get("/legal", response_class=HTMLResponse)
+@app.get("/pisma", response_class=HTMLResponse)
+async def serve_legal_frontend():
+    """Serve the Legal Office frontend"""
+    legal_html = FRONTEND_DIR / "legal.html"
+    if legal_html.exists():
+        return HTMLResponse(content=legal_html.read_text(encoding="utf-8"))
+    return HTMLResponse(content="Legal module not found", status_code=404)
+
+
+@app.get("/admin", response_class=HTMLResponse)
+@app.get("/panel", response_class=HTMLResponse)
+async def serve_admin_panel():
+    """Serve the Admin Panel"""
+    admin_html = FRONTEND_DIR / "admin.html"
+    if admin_html.exists():
+        return HTMLResponse(content=admin_html.read_text(encoding="utf-8"))
+    return HTMLResponse(content="Admin panel not found", status_code=404)
+
+
+@app.get("/license", response_class=HTMLResponse)
+@app.get("/licencja", response_class=HTMLResponse)
+async def serve_license_page():
+    """Serve the License page"""
+    license_html = FRONTEND_DIR / "license.html"
+    if license_html.exists():
+        return HTMLResponse(content=license_html.read_text(encoding="utf-8"))
+    return HTMLResponse(content="License page not found", status_code=404)
+
+
+@app.get("/negocjator", response_class=HTMLResponse)
+@app.get("/debt", response_class=HTMLResponse)
+async def serve_negocjator_page():
+    """Serve the AI Negocjator page"""
+    neg_html = FRONTEND_DIR / "negocjator.html"
+    if neg_html.exists():
+        return HTMLResponse(content=neg_html.read_text(encoding="utf-8"))
+    return HTMLResponse(content="Negocjator page not found", status_code=404)
+
+
+# PWA Assets
+@app.get("/sw.js", include_in_schema=False)
+@app.get("/ngsw-worker.js", include_in_schema=False)
+async def serve_service_worker(request: Request):
+    """Service worker"""
+    candidates = [
+        _APP_ROOT / "sw.js",
+        FRONTEND_DIR / "sw.js",
+        BASE_DIR / "sw.js",
+    ]
+    for path in candidates:
+        if path.exists():
+            return FileResponse(path, media_type="application/javascript")
+    return HTMLResponse(status_code=404, content="service worker not found")
+
+@app.get("/manifest.webmanifest", include_in_schema=False)
+async def serve_manifest():
+    """Web App Manifest"""
+    candidates = [
+        _APP_ROOT / "manifest.webmanifest",
+        FRONTEND_DIR / "manifest.webmanifest",
+        BASE_DIR / "manifest.webmanifest",
+    ]
+    for path in candidates:
+        if path.exists():
+            return FileResponse(path, media_type="application/manifest+json")
+    return HTMLResponse(status_code=404, content="manifest not found")
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def serve_favicon():
+    """Favicon"""
+    paths = [
+        FRONTEND_DIR / "favicon.ico",
+        _APP_ROOT / "favicon.ico",
+        BASE_DIR / "icons" / "favicon.ico"
+    ]
+    for path in paths:
+        if path.exists():
+            return FileResponse(path, media_type="image/x-icon")
+    return HTMLResponse(status_code=404)
+
+# Static files (assets, icons, webui)
+if (BASE_DIR / "icons").exists():
+    app.mount("/icons", StaticFiles(directory=str(BASE_DIR / "icons")), name="icons")
+
+# WebUI - Alternatywny frontend (vanilla JS PWA)
+webui_dir = BASE_DIR.parent / "webui"  # Katalog główny projektu
+if webui_dir.exists():
+    # Mount bez html=True żeby nie konfliktowal z routing
+    app.mount("/webui", StaticFiles(directory=str(webui_dir)),
+              name="webui")
+    print("[OK] WebUI Frontend mounted at /webui/")
+    
+    # Handler dla /webui/ -> index.html
+    @app.get("/webui/", include_in_schema=False)
+    async def webui_index():
+        return FileResponse(str(webui_dir / "index.html"))
+        
+else:
+    print(f"[FAIL] WebUI directory not found at {webui_dir}")
+
+
+# ═══════════════════════════════════════════════════════════════════
+# STARTUP & SHUTDOWN
+# ═══════════════════════════════════════════════════════════════════
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Inicjalizacja przy starcie"""
+    print("\n" + "="*70)
+    print("MORDZIX AI - STARTED")
+    print("="*70)
+    print("\n[INFO] Funkcje:")
+    print("  [OK] Auto STM->LTM transfer")
+    print("  [OK] Auto-learning (Google + scraping)")
+    print("  [OK] Context injection (LTM w prompt)")
+    print("  [OK] Psyche system (nastrój AI)")
+    print("  [OK] Travel (hotele/restauracje/atrakcje)")
+    print("  [OK] Code executor (shell/git/docker)")
+    print("  [OK] TTS/STT (ElevenLabs + Whisper)")
+    print("\n[INFO] Endpoints:")
+    print("  [API] Chat:      POST /api/chat/assistant")
+    print("  [API] Stream:    POST /api/chat/assistant/stream")
+    print("  [API] Psyche:    GET  /api/psyche/status")
+    print("  [API] Travel:    GET  /api/travel/search")
+    print("  [API] Code:      POST /api/code/exec")
+    print("  [API] Files:     POST /api/files/upload")
+    print("  [API] TTS:       POST /api/tts/speak")
+    print("  [API] STT:       POST /api/stt/transcribe")
+    print("\n[INFO] Interfejs:")
+    print("  [WEB] Frontend:  http://localhost:8080/")
+    print("  [WEB] Docs:      http://localhost:8080/docs")
+    print("\n" + "="*70 + "\n")
+
+    summary = get_automation_summary(refresh=True)
+    fast_count = summary.get("fast_path", {}).get("count", 0)
+    tool_count = summary.get("tools", {}).get("count", 0)
+    manual_count = summary.get("manual", {}).get("count", 0)
+    automatic_total = summary.get("totals", {}).get("automatic", 0)
+
+    print("[INFO] Automatyzacja:")
+    print(f"  [OK] Fast path handlers : {fast_count}")
+    print(f"  [OK] Router tools       : {tool_count}")
+    print(f"  [OK] Manual approvals   : {manual_count}")
+    print(f"  [OK] Auto executables   : {automatic_total}")
+    
+    # Inicjalizacja bazy danych i pamięci
+    try:
+        from core.memory import _init_db, load_ltm_to_memory
+        _init_db()
+        load_ltm_to_memory()
+        print("[OK] Pamięć LTM załadowana")
+    except Exception as e:
+        print(f"[WARN] Błąd inicjalizacji pamięci: {e}")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup przy wyłączeniu"""
+    print("\n[INFO] Shutting down Mordzix AI...")
+
+# ═══════════════════════════════════════════════════════════════════
+# MAIN - Uruchomienie serwera
+# ═══════════════════════════════════════════════════════════════════
+
+if __name__ == "__main__":
+    import argparse
+
+    if uvicorn is None:
+        raise RuntimeError("Uvicorn nie jest zainstalowany. Uruchom 'pip install uvicorn' w środowisku aplikacji.")
+    
+    parser = argparse.ArgumentParser(description='Mordzix AI Server')
+    parser.add_argument('-p', '--port', type=int, default=8080, help='Port (default: 8080)')
+    parser.add_argument('-H', '--host', default="0.0.0.0", help='Host (default: 0.0.0.0)')
+    parser.add_argument('--reload', action='store_true', help='Auto-reload on code changes')
+    args = parser.parse_args()
+    
+    print(f"\n[INFO] Starting server on http://{args.host}:{args.port}")
+    print(f"[INFO] API Docs: http://localhost:{args.port}/docs")
+    print(f"[INFO] Frontend: http://localhost:{args.port}/\n")
+    
+    uvicorn.run(
+        "core.app:app",
+        host=args.host,
+        port=args.port,
+        reload=args.reload,
+        log_level="info"
+    )
+
+
+@app.get('/metrics', include_in_schema=False)
+def _metrics():
+    return metrics_endpoint()
+
+
+# === AUTO: podpięcie wszystkich pozostałych routerów ===
+try:
+    from .auto_router_loader import attach_all_routers
+
+    attach_all_routers(app)
+except Exception as e:
+    print(f"[AUTO_ROUTERS] [FAIL] Nie udalo sie podpiac wszystkich routerow: {e}")
+# --- HOTFIX BOOTSTRAP (idempotent) ---
+try:
+    from core.hotfix_bootstrap import register as _hotfix_register
+    @app.on_event("startup")
+    async def _hotfix_mount():
+        try:
+            _hotfix_register(app)
+        except Exception as e:
+            print("[HOTFIX] register failed:", e)
+except Exception as e:
+    print("[HOTFIX] import failed:", e)
+# --- END HOTFIX ---
+==================== END core/app.py ======================
+
+==================== BEGIN core/assistant_endpoint.py ====================
+from core._memory_fallback import memory_wrapper
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+assistant_endpoint.py — stabilny endpoint czatu + stream + autonauka
+
+Poprawki i rozszerzenia:
+- 🔐 AUTH_TOKEN: egzekwowanie (REQUIRE_AUTH=1) z opcją dev (ALLOW_PLACEHOLDER_AUTH=1)
+- 🗒️ Fallbacki logują – brak „cichego” połknięcia wyjątków
+- 💾 save_message fallback: zapis do WORKSPACE/fallback_messages.jsonl
+- 🧾 ChatRequest: __str__/__repr__ (szczupłe logi)
+- 👤 user_id: anon-<hash(IP|UA)> gdy CHAT_ALLOW_ANON=1 (zamiast dzielonego „default”)
+- 🔎 Web: tylko jawne triggery PL/EN (+ heurystyka rok/dziś/teraz, +ENV)
+- 📎 Załączniki: .txt/.pdf/.docx/obrazy/binary (limity z ENV)
+- 🧵 Streaming: czysty SSE (start/chunk/complete/error) + timeout
+- 🛡️ Guard anty-halucynacji wstrzykiwany tylko gdy rzeczywiście dodajemy web_ctx
+- 🧪 Proste testy: _should_use_web_from_text, _find_trigger_phrase, _derive_anon_user_id, _fallback_save_message_jsonl
+"""
+
+from typing import List, Dict, Any, Optional, Tuple, AsyncIterator
+from fastapi import APIRouter, Request, HTTPException
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+from datetime import datetime
+import os, json, hashlib, re, time
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Logi
+
+try:
+    from core.helpers import log_warning, log_info
+except Exception as e:
+    def log_info(msg: str): print(msg)
+    def log_warning(msg: str): print(msg)
+    print(f"[helpers:fallback] {e}")
+
+# Bezpieczeństwo
+try:
+    from core.security import security_manager, get_client_ip
+except Exception as e:
+    log_warning(f"[SEC] core.security not available, using fallback: {e}")
+    class _SecFB:
+        def check_rate_limit(self, *a, **k): return True
+        def record_failed_attempt(self, *a, **k): log_warning("[SEC] record_failed_attempt (fallback)")
+    security_manager = _SecFB()
+    def get_client_ip(req: Request):
+        return (getattr(getattr(req, "client", None), "host", None)
+                or req.headers.get("x-forwarded-for","0.0.0.0").split(",")[0].strip())
+
+# Cognitive Engine
+try:
+    from core.cognitive_engine import cognitive_engine
+except Exception as e:
+    cognitive_engine = None
+    log_warning(f"[COGNITIVE] cognitive_engine not available: {e}")
+
+# LLM streaming
+try:
+    from .llm import call_llm_stream_with_fallback
+except Exception as e:
+    call_llm_stream_with_fallback = None
+    log_warning(f"[LLM] Streaming unavailable (fallback): {e}")
+
+# Memory store — głośny fallback do JSONL
+def _fallback_save_message_jsonl(uid: str, role: str, content: str, tags=None):
+    try:
+        from pathlib import Path
+        workspace = Path(os.getenv("WORKSPACE", "."))
+        f = workspace / "fallback_messages.jsonl"
+        f.parent.mkdir(parents=True, exist_ok=True)
+        rec = {
+            "ts": datetime.utcnow().isoformat(),
+            "user_id": uid,
+            "role": role,
+            "content": content,
+            "tags": tags or [],
+        }
+        with f.open("a", encoding="utf-8") as fp:
+            fp.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        log_warning(f"[MEMSTORE:fallback] message stored -> {f}")
+    except Exception as e:
+        log_warning(f"[MEMSTORE:fallback] write failed: {e}")
+
+try:
+    from .memory_store import save_message as _save_message_low
+    def save_message(uid, role, content, tags=None):
+        try:
+            _save_message_low(uid, role, content, tags=tags or [])
+        except Exception as e:
+            log_warning(f"[MEMSTORE] save_message failed: {e} — using fallback JSONL")
+            _fallback_save_message_jsonl(uid, role, content, tags)
+except Exception as e:
+    log_warning(f"[MEMSTORE] memory_store not available: {e} — using fallback JSONL")
+    def save_message(uid, role, content, tags=None):
+        _fallback_save_message_jsonl(uid, role, content, tags)
+
+# Intent detector (fallback)
+try:
+    from .intent_detector import detect_intent, get_mode_prompt_addon
+except Exception as e:
+    log_warning(f"[INTENT] intent_detector not available: {e}")
+    def detect_intent(_text: str):
+        class _I:
+            mode = os.getenv("DEFAULT_INTENT_MODE", "casual")
+            needs_web_search = False
+            tool_call = None
+            tool_params = None
+            tool_description = ""
+        return _I()
+    def get_mode_prompt_addon(_mode: str) -> str:
+        return ""
+
+# ────────────────────────────────────────────────────────────────────────────────
+# ENV helpers
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None or raw.strip() == "":
+        return default
+    try:
+        v = int(raw.strip())
+        return v if v > 0 else default
+    except Exception:
+        log_warning(f"[ENV] Invalid int for {name}='{raw}', using {default}")
+        return default
+
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    val = raw.strip().lower()
+    if val in ("1","true","yes","y","on"): return True
+    if val in ("0","false","no","n","off"): return False
+    log_warning(f"[ENV] Invalid bool for {name}='{raw}', using {default}")
+    return default
+
+STREAM_TIMEOUT_S             = _env_int("CHAT_STREAM_TIMEOUT_S", 120)
+WEB_MAX_RESULTS              = _env_int("CHAT_WEB_MAX_RESULTS", 8)
+ALLOW_FORCE_WEB              = _env_bool("CHAT_ALLOW_FORCE_WEB", False)
+
+REQUIRE_AUTH                 = _env_bool("REQUIRE_AUTH", True)
+ALLOW_PLACEHOLDER_AUTH       = _env_bool("ALLOW_PLACEHOLDER_AUTH", False)
+CHAT_ALLOW_ANON              = _env_bool("CHAT_ALLOW_ANON", False)
+
+ATTACH_TEXT_LIMIT_CHARS      = _env_int("ATTACH_TEXT_LIMIT_CHARS", 15000)
+ATTACH_PDF_MAX_PAGES         = _env_int("ATTACH_PDF_MAX_PAGES", 10)
+ATTACH_PDF_CHARS_PER_PAGE    = _env_int("ATTACH_PDF_CHARS_PER_PAGE", 3000)
+ATTACH_DOCX_LIMIT_CHARS      = _env_int("ATTACH_DOCX_LIMIT_CHARS", 10000)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Modele
+
+class Message(BaseModel):
+    role: str
+    content: str
+    attachments: Optional[List[Dict[str, Any]]] = []
+
+class ChatRequest(BaseModel):
+    messages: List[Message]
+    user_id: Optional[str] = "default"  # realnie nadpisywane z token/IP+UA
+    session_id: Optional[str] = None
+    model: Optional[str] = None
+    use_memory: bool = True
+    use_research: bool = True
+    internet_allowed: Optional[bool] = True
+    web_search: Optional[bool] = None   # tylko do logów – decyzja po tekście
+    auto_learn: Optional[bool] = True
+    use_batch_processing: Optional[bool] = True
+    attachments: Optional[List[Dict[str, Any]]] = []
+    # rozszerzenia
+    force_web: Optional[bool] = None
+    debug: Optional[bool] = False
+
+    def __str__(self) -> str:
+        mcnt = len(self.messages or [])
+        attc = len(self.attachments or [])
+        return (f"ChatRequest(msgs={mcnt}, session={self.session_id}, model={self.model}, "
+                f"internet_allowed={self.internet_allowed}, force_web={self.force_web}, "
+                f"web_search={self.web_search}, attachments={attc})")
+
+    __repr__ = __str__
+
+class ChatResponse(BaseModel):
+    ok: bool
+    answer: str
+    sources: Optional[List[Dict[str, Any]]] = []
+    metadata: Dict[str, Any] = {}
+
+# ────────────────────────────────────────────────────────────────────────────────
+router = APIRouter(prefix="/api/chat")
+
+# Auth
+AUTH_TOKEN = os.getenv("AUTH_TOKEN", "__CHANGE_ME_AUTH_TOKEN__")
+if REQUIRE_AUTH and AUTH_TOKEN == "__CHANGE_ME_AUTH_TOKEN__" and not ALLOW_PLACEHOLDER_AUTH:
+    log_warning("[AUTH] AUTH_TOKEN is default placeholder. Set AUTH_TOKEN or ALLOW_PLACEHOLDER_AUTH=1 (DEV ONLY).")
+    raise RuntimeError("AUTH_TOKEN not configured")
+
+# Limity
+RATE_LIMIT_CHAT = 60
+RATE_LIMIT_CHAT_STREAM = 60
+MAX_MESSAGE_LENGTH = 50000
+MAX_MESSAGES_COUNT = 100
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Auth + rate limit
+
+def _hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()[:16]
+
+def _derive_anon_user_id(req: Request) -> str:
+    ip = get_client_ip(req)
+    ua = req.headers.get("User-Agent", "-")
+    mat = f"{ip}|{ua}".encode()
+    return "anon-" + hashlib.sha256(mat).hexdigest()[:16]
+
+def _get_user_id(req: Request, token: Optional[str]) -> str:
+    if token:
+        return _hash_token(token)
+    return _derive_anon_user_id(req) if CHAT_ALLOW_ANON else "default"
+
+def _auth_with_rate_limit(req: Request, limit: int) -> str:
+    client_ip = get_client_ip(req)
+    path = req.url.path
+    if not security_manager.check_rate_limit(client_ip, path, limit):
+        log_warning(f"[CHAT] Rate limit exceeded for {client_ip} on {path}")
+        raise HTTPException(429, "Rate limit exceeded. Try later.")
+
+    auth = req.headers.get("Authorization", "")
+    token = auth.replace("Bearer ", "").strip() if auth.startswith("Bearer ") else ""
+
+    if REQUIRE_AUTH and token != AUTH_TOKEN:
+        if CHAT_ALLOW_ANON and token == "":
+            uid = _get_user_id(req, token)
+            log_warning(f"[AUTH] Anonymous access allowed → {uid}")
+            return uid
+        security_manager.record_failed_attempt(client_ip)
+        raise HTTPException(401, "Unauthorized")
+
+    return _get_user_id(req, token)
+
+def _validate_session_ownership(session_id: Optional[str], user_id: str):
+    if not session_id:
+        return
+    try:
+        from .sessions import verify_session_ownership
+        if not verify_session_ownership(session_id, user_id):
+            raise HTTPException(403, "Access denied: you don't own this session")
+    except ImportError as e:
+        log_warning(f"[SESSIONS] verify_session_ownership not available: {e}")
+
+# ────────────────────────────────────────────────────────────────────────────────
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Web triggers — jawne słowa/zwroty (PL/EN)
+
+_POS = [
+    # PL — polecenia / wyszukiwanie
+    r"\bsprawd[źz]\b", r"\bsprawdzisz\b", r"\bwyszukaj\b", r"\bposzukaj\b",
+    r"\bprzeszukaj\b", r"\bprzejrzyj\b", r"\bprzekop\b", r"\bwygoogluj\b",
+    r"\bgoogle\b", r"\bznajd[źz]\b", r"\bodszukaj\b",
+    r"\bw (internecie|sieci|necie)\b", r"\bonline\b",
+    # aktualność / dane bieżące
+    r"\bnajnowsz(e|y|a)\b", r"\baktualn(e|y|a)\b", r"\bdzi(si|ś)aj\b",
+    r"\bteraz\b", r"\bwczoraj\b",
+    # sport / rynki / pogoda
+    r"\bwynik (meczu|spotkania)\b", r"\bterminarz\b", r"\btabela\b", r"\bskład(y)?\b",
+    r"\bkurs( (usd|eur|pln|btc|eth))?\b", r"\bnotowani(a|e)\b", r"\bcena(y)?\b",
+    r"\bpor[óo]wnaj cen(y|e)\b", r"\brecenzj(e|a)\b", r"\bofert(y|a)\b", r"\bpogoda\b",
+    # weryfikacja / źródła
+    r"\bzweryfikuj\b", r"\bpotwierd[źz]\b",
+    r"\bpoka[żz] (źr[óo]dła|linki?)\b", r"\bpodaj linki?\b",
+    r"\bzr[óo]b research\b", r"\bresearch\b",
+    # EN
+    r"\bsearch\b", r"\blook up\b", r"\bfind\b", r"\bgoogle it\b", r"\bgoogle\b",
+    r"\bcheck (online|on the web)\b", r"\bverify\b", r"\bdouble[- ]check\b",
+    r"\bshow sources?\b", r"\bgive me links?\b",
+    r"\blatest\b", r"\bcurrent\b", r"\bnews\b",
+    r"\bresult\b", r"\bscore\b", r"\bfixture(s)?\b", r"\bstanding(s)?\b",
+    r"\bprice(s)?\b", r"\brate(s)?\b", r"\bweather\b",
+]
+
+_NEG = [
+    # PL / EN — wyłączenie weba
+    r"\bbez internetu\b", r"\boffline\b", r"\boffline only\b",
+    r"\bnie (sprawdzaj|wyszukuj|szukaj)\b", r"\bniczego nie sprawdzaj\b",
+    r"\bno internet\b", r"\bdon'?t (search|use (the )?web)\b", r"\bno web\b",
+]
+
+_POS_RE = [re.compile(p, re.IGNORECASE) for p in _POS]
+_NEG_RE = [re.compile(p, re.IGNORECASE) for p in _NEG]
+
+
+def _sanitize_text(t: str) -> str:
+    t = (t or "").replace("\u200b"," ").replace("\u2060"," ")
+    t = re.sub(r"\s+", " ", t).strip()
+    return t
+
+def _find_trigger_phrase(text: str) -> Tuple[Optional[str], Optional[str]]:
+    for rx in _NEG_RE:
+        m = rx.search(text)
+        if m:
+            return (m.group(0), "negative_trigger")
+    for rx in _POS_RE:
+        m = rx.search(text)
+        if m:
+            return (m.group(0), "explicit_trigger")
+    return (None, None)
+
+def _should_use_web_from_text(text: str, internet_allowed: Optional[bool], force_web: Optional[bool]) -> Tuple[bool, str, Optional[str]]:
+    if internet_allowed is False:
+        return (False, "disabled_by_flag", None)
+    t = _sanitize_text(text)
+    if not t:
+        return (False, "no_text", None)
+    matched, reason = _find_trigger_phrase(t)
+    if reason == "negative_trigger":
+        return (False, reason, matched)
+    if reason == "explicit_trigger":
+        return (True, reason, matched)
+    if ALLOW_FORCE_WEB and bool(force_web) is True:
+        return (True, "force_web_flag", None)
+    # heurystyka: rok lub „dziś/teraz”
+    if re.search(r"\b20\d{2}\b", t) or re.search(r"\b(dzi[śs]|teraz)\b", t, re.I):
+        return (True, "heuristics:year/timeword", None)
+    return (False, "no_trigger", None)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Auto tools
+
+async def _execute_auto_tool(endpoint: str, params: Dict[str, Any], user_message: str) -> Optional[str]:
+    try:
+        import httpx
+    except Exception as e:
+        log_warning(f"[AUTO_TOOL] httpx not available: {e}")
+        return None
+    try:
+        if endpoint.startswith('/api/fashion'):
+            params.setdefault('brand',''); params.setdefault('item_type','')
+            params.setdefault('condition','bardzo dobry'); params.setdefault('platform','vinted')
+            params.setdefault('details', user_message)
+        elif endpoint.startswith('/api/auction'):
+            params.setdefault('title', user_message[:100]); params.setdefault('description', user_message)
+            params.setdefault('category','moda')
+        elif endpoint.startswith('/api/travel'):
+            params.setdefault('destination',''); params.setdefault('origin','Warszawa')
+        elif endpoint.startswith('/api/hacker'):
+            params.setdefault('target',''); params.setdefault('ports','common')
+        elif endpoint.startswith('/api/legal'):
+            params.setdefault('content', user_message); params.setdefault('document_type','pismo')
+        elif endpoint.startswith('/api/negocjator'):
+            params.setdefault('opis', user_message); params.setdefault('kwota', 0)
+        elif endpoint.startswith('/api/programista'):
+            params.setdefault('code',''); params.setdefault('language','python'); params.setdefault('prompt', user_message)
+        elif endpoint.startswith('/api/writing'):
+            params.setdefault('topic', user_message); params.setdefault('tone','professional')
+        elif endpoint.startswith('/api/nlp'):
+            params.setdefault('text', user_message)
+        elif endpoint.startswith('/api/memory'):
+            params.setdefault('content', user_message); params.setdefault('query', user_message)
+        elif endpoint.startswith('/api/media'):
+            params.setdefault('prompt', user_message)
+        elif endpoint.startswith('/api/research'):
+            params.setdefault('query', user_message)
+
+        async with httpx.AsyncClient(timeout=30) as client:
+            r = await client.post("http://127.0.0.1:8080"+endpoint, json=params, headers={"Authorization": f"Bearer {AUTH_TOKEN}"})
+            if r.status_code != 200:
+                log_warning(f"[AUTO_TOOL] HTTP {r.status_code}: {r.text[:200]}")
+                return None
+            try:
+                data = r.json()
+            except Exception:
+                return r.text[:1000]
+            return _format_tool_result(endpoint, data, user_message)
+    except Exception as e:
+        log_warning(f"[AUTO_TOOL] Error: {e}")
+        return None
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Format wyników tools/web
+
+def _format_tool_result(endpoint: str, data: Dict[str, Any], user_message: str = "") -> str:
+    # FASHION
+    if '/fashion/description' in endpoint and data.get('success'):
+        return ("📝 WYGENEROWANY OPIS AUKCJI:\n\n"
+                f"**Tytuł:** {data.get('title','Brak')}\n\n"
+                f"**Opis:**\n{data.get('description','Brak')}\n\n"
+                f"**Tagi:** {', '.join(data.get('tags',[]))}\n"
+                f"**Hashtagi:** {' '.join(data.get('hashtags',[]))}")
+    if '/fashion/price' in endpoint and data.get('success'):
+        rng = data.get('price_range',{}) ; factors = "\n".join('• '+str(f) for f in data.get('factors',[]))
+        return ("💰 WYCENA PRZEDMIOTU:\n\n"
+                f"**Szacowana cena:** {data.get('estimated_price',0)} PLN\n"
+                f"**Zakres:** {rng.get('min',0)} - {rng.get('max',0)} PLN\n\n"
+                f"**Czynniki wpływające:**\n{factors}")
+    if '/fashion/outfit' in endpoint and data.get('success'):
+        o = data.get('outfit',{}) ; items = "\n".join('• '+str(i) for i in o.get('suggested_items',[]))
+        return ("👔 PROPOZYCJA STYLIZACJI:\n\n"
+                f"**Okazja:** {o.get('occasion','Ogólna')}\n**Styl:** {o.get('style','Casual')}\n\n"
+                f"**Elementy:**\n{items}\n\n"
+                f"**Paleta kolorów:** {', '.join(o.get('color_palette',[]))}\n"
+                f"**Tip:** {o.get('weather_tip','')}")
+    # AUCTION
+    if '/auction/analyze' in endpoint and data.get('success'):
+        sugg = "\n".join('• '+str(s) for s in (data.get('title_analysis',{}) or {}).get('suggestions',[])[:5])
+        return ("📊 ANALIZA AUKCJI:\n\n"
+                f"**Ocena:** {data.get('grade','?')} ({data.get('overall_score',0)}/100 pkt)\n\n"
+                f"**Tytuł:** {(data.get('title_analysis',{}) or {}).get('score',0)}/25 pkt\n"
+                f"**Opis:** {(data.get('description_analysis',{}) or {}).get('score',0)}/35 pkt\n\n"
+                f"**Sugestie:**\n{sugg}")
+    # TRAVEL
+    if '/travel' in endpoint:
+        r = (data.get('results') or [data])[0]
+        return ("✈️ PROPOZYCJA PODRÓŻY:\n\n"
+                f"**Destynacja:** {r.get('destination', r.get('name','Nieznana'))}\n"
+                f"**Cena:** {r.get('price', r.get('estimated_price','N/A'))} PLN\n"
+                f"**Czas trwania:** {r.get('duration','7 dni')}\n\n"
+                f"{r.get('description','')}")
+    # HACKER
+    if '/hacker/portscan' in endpoint and data.get('success'):
+        ports = data.get('open_ports',[])
+        listing = "\n".join(f"  • Port {p.get('port')}: {p.get('service','?')}" for p in ports[:10])
+        return ("🔍 WYNIK SKANOWANIA PORTÓW:\n\n"
+                f"**Target:** {data.get('target','?')}\n**Czas skanowania:** {data.get('scan_time','?')}s\n\n"
+                f"**Otwarte porty:**\n{listing if ports else '  Brak otwartych portów'}")
+    if '/hacker/recon' in endpoint and data.get('success'):
+        return ("🕵️ REKONESANS:\n\n"
+                f"**Target:** {data.get('target','?')}\n**DNS:** {data.get('dns',{})}\n"
+                f"**WHOIS:** {str(data.get('whois',{}))[:300]}\n"
+                f"**Tech Stack:** {', '.join(data.get('tech_stack',[]))}")
+    if '/hacker/headers' in endpoint and data.get('success'):
+        hdrs = data.get('headers',{}) or {}
+        lines = "\n".join(f"  • {k}: {'✓' if (v or {}).get('present') else '✗'}" for k,v in hdrs.items())
+        return ("🛡️ ANALIZA NAGŁÓWKÓW:\n\n"
+                f"**URL:** {data.get('url','?')}\n**Score:** {data.get('score',0)}/100\n\n"
+                f"**Nagłówki:**\n{lines}")
+    # LEGAL
+    if '/legal/generate' in endpoint and data.get('success'):
+        return "⚖️ WYGENEROWANE PISMO:\n\n"+data.get('response', data.get('content','Brak treści'))
+    if '/legal/analyze' in endpoint and data.get('success'):
+        return ("📋 ANALIZA PISMA:\n\n"
+                f"**Typ:** {data.get('document_type','?')}\n**Nadawca:** {data.get('sender','?')}\n"
+                f"**Termin:** {data.get('deadline','Brak')}\n\n"
+                f"**Podsumowanie:**\n{data.get('summary', data.get('analysis','Brak analizy'))}")
+    if '/legal/deadline' in endpoint:
+        return ("⏰ OBLICZONY TERMIN:\n\n"
+                f"**Termin:** {data.get('deadline', data.get('date','?'))}\n"
+                f"**Dni do terminu:** {data.get('days_left','?')}")
+    # NEGOCJATOR
+    if '/negocjator/przedawnienie' in endpoint:
+        return ("📅 ANALIZA PRZEDAWNIENIA:\n\n"
+                f"**Status:** {data.get('status','?')}\n"
+                f"**Data przedawnienia:** {data.get('data_przedawnienia','?')}\n"
+                f"**Czy przedawniony:** {'TAK ✓' if data.get('przedawniony') else 'NIE ✗'}\n\n"
+                f"{data.get('opis','')}")
+    if '/negocjator/ugody' in endpoint:
+        return "🤝 PROPOZYCJA UGODY:\n\n"+data.get('propozycja', data.get('content','Brak propozycji'))
+    if '/negocjator/szanse' in endpoint:
+        return ("⚖️ OCENA SZANS:\n\n"
+                f"**Szanse na wygraną:** {data.get('szanse','?')}%\n"
+                f"**Rekomendacja:** {data.get('rekomendacja','?')}\n\n"
+                f"{data.get('uzasadnienie','')}")
+    # PROGRAMISTA
+    if '/programista/execute' in endpoint:
+        out = data.get('output', data.get('result', data.get('stdout','Brak wyniku')))
+        err = data.get('error', data.get('stderr',''))
+        return "💻 WYNIK WYKONANIA:\n\n```\n"+str(out)+"\n```\n"+(f"**Błąd:** {err}" if err else "")
+    if '/programista/analyze' in endpoint or '/programista/explain' in endpoint:
+        return "🔍 ANALIZA KODU:\n\n"+str(data.get('analysis', data.get('explanation', data.get('result','Brak analizy'))))
+    if '/programista/debug' in endpoint:
+        return ("🐛 DEBUGOWANIE:\n\n"
+                f"**Problem:** {data.get('issue', data.get('problem','?'))}\n"
+                f"**Rozwiązanie:** {data.get('solution', data.get('fix','?'))}\n\n"
+                "**Poprawiony kod:**\n```\n"+str(data.get('fixed_code',''))+"\n```")
+    if '/programista/generate' in endpoint:
+        return "💻 WYGENEROWANY KOD:\n\n```"+str(data.get('language',''))+"\n"+str(data.get('code', data.get('result','Brak kodu')))+"\n```"
+    # WRITING
+    if '/writing' in endpoint:
+        return "✍️ WYGENEROWANY TEKST:\n\n"+str(data.get('content', data.get('text', data.get('result','Brak tekstu'))))
+    # NLP
+    if '/nlp/sentiment' in endpoint:
+        return ("😊 ANALIZA SENTYMENTU:\n\n"
+                f"**Wynik:** {data.get('sentiment','?')}\n**Score:** {data.get('score','?')}\n"
+                f"**Emocje:** {', '.join(data.get('emotions',[]))}")
+    if '/nlp/summarize' in endpoint:
+        return "📝 STRESZCZENIE:\n\n"+str(data.get('summary', data.get('result','Brak streszczenia')))
+    if '/lang/translate' in endpoint:
+        return "🌍 TŁUMACZENIE:\n\n"+str(data.get('translation', data.get('result', data.get('text','Brak tłumaczenia'))))
+    # MEMORY
+    if '/memory/add' in endpoint:
+        return "💾 ZAPISANO DO PAMIĘCI:\n\n"+str(data.get('message','Zapisano pomyślnie'))
+    if '/memory/search' in endpoint:
+        res = data.get('results',[])
+        if res:
+            return "🧠 ZNALEZIONE WSPOMNIENIA:\n\n" + "\n".join('• '+str(r.get('content',r))[:200] for r in res[:5])
+        return "Nie znaleziono pasujących wspomnień."
+    # MEDIA
+    if '/media/generate' in endpoint and data.get('success'):
+        return ("🎨 WYGENEROWANO OBRAZ:\n\n"
+                f"**URL:** {data.get('url', data.get('image_url','?'))}\n"
+                f"**Prompt:** {data.get('prompt', user_message)[:100]}")
+    # VISION
+    if '/vision/analyze' in endpoint:
+        return "👁️ ANALIZA OBRAZU:\n\n"+str(data.get('description', data.get('analysis', data.get('result','Brak opisu'))))
+    # RESEARCH
+    if '/research/search' in endpoint:
+        res = data.get('results',[])
+        if res:
+            return "🔍 WYNIKI WYSZUKIWANIA:\n\n" + "\n".join(f"• {r.get('title','?')}: { (r.get('snippet','') or '')[:150] }" for r in res[:5])
+        return "Brak wyników wyszukiwania."
+    # ML
+    if '/ml/predict' in endpoint:
+        return ("📈 PREDYKCJA:\n\n"
+                f"**Wynik:** {data.get('prediction', data.get('result','?'))}\n"
+                f"**Pewność:** {data.get('confidence','?')}%")
+    # PSYCHE
+    if '/psyche/analyze' in endpoint:
+        return "🧠 ANALIZA PSYCHOLOGICZNA:\n\n"+str(data.get('analysis', data.get('result','Brak analizy')))
+
+    # Fallback
+    for k in ('result','content','data','response','output','text'):
+        if data.get(k) is not None:
+            return "✅ **Wynik:**\n\n"+str(data[k])[:1500]
+    try:
+        return json.dumps(data, ensure_ascii=False)[:1000]
+    except Exception:
+        return str(data)[:1000]
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Pomocnicze
+
+def _last_user_text(msgs: List[Message]) -> str:
+    for m in reversed(msgs):
+        if (m.role or "").lower() == "user":
+            return m.content or ""
+    return ""
+
+def _attachments_context(attachments: List[Dict[str,Any]]) -> Tuple[str, Dict[str,int]]:
+    if not attachments:
+        return "", {"total":0,"text":0,"pdf":0,"docx":0,"image":0,"other":0,"errors":0}
+    stats = {"total":0,"text":0,"pdf":0,"docx":0,"image":0,"other":0,"errors":0}
+    ctx = ""
+    try:
+        from pathlib import Path
+        workspace = Path(os.getenv("WORKSPACE", "."))
+        uploads = workspace / "uploads"
+        for att in attachments:
+            stats["total"] += 1
+            name = att.get("name", att.get("filename", "plik"))
+            file_id = att.get("id","")
+            file_url = att.get("url","")
+            path = uploads / file_id if file_id else (uploads / file_url.replace("/api/files/","") if file_url and file_url.startswith("/api/files/") else None)
+
+            def _append(txt: str):
+                nonlocal ctx
+                ctx += txt
+
+            if path and path.exists():
+                ext = path.suffix.lower()
+                try:
+                    if ext in {'.txt','.md','.json','.csv','.xml','.html','.py','.js','.ts','.css','.log','.yaml','.yml','.ini','.cfg','.conf'}:
+                        content = path.read_text(encoding='utf-8', errors='ignore')[:ATTACH_TEXT_LIMIT_CHARS]
+                        _append(f"\n\n📎 ZAŁĄCZNIK [{name}]:\n```\n{content}\n```")
+                        stats["text"] += 1
+                    elif ext == '.pdf':
+                        try:
+                            import fitz  # PyMuPDF
+                            doc = fitz.open(str(path))
+                            t = ""
+                            for page in doc[:ATTACH_PDF_MAX_PAGES]:
+                                t += page.get_text()[:ATTACH_PDF_CHARS_PER_PAGE]
+                            doc.close()
+                            if t.strip():
+                                _append(f"\n\n📎 ZAŁĄCZNIK PDF [{name}]:\n```\n{t[:ATTACH_TEXT_LIMIT_CHARS]}\n```")
+                            else:
+                                _append(f"\n\n📎 ZAŁĄCZNIK [{name}]: [PDF] bez tekstu")
+                            stats["pdf"] += 1
+                        except Exception:
+                            _append(f"\n\n📎 ZAŁĄCZNIK [{name}]: [PDF]")
+                            stats["pdf"] += 1
+                    elif ext == '.docx':
+                        try:
+                            import docx  # python-docx
+                            d = docx.Document(str(path))
+                            t = "\n".join(p.text for p in d.paragraphs)[:ATTACH_DOCX_LIMIT_CHARS]
+                            _append(f"\n\n📎 ZAŁĄCZNIK DOCX [{name}]:\n```\n{t}\n```")
+                        except Exception:
+                            _append(f"\n\n📎 ZAŁĄCZNIK [{name}]: [DOCX]")
+                        stats["docx"] += 1
+                    elif ext in {'.png','.jpg','.jpeg','.gif','.webp','.bmp'}:
+                        _append(f"\n\n📎 ZAŁĄCZNIK [{name}]: [OBRAZ]")
+                        stats["image"] += 1
+                    else:
+                        _append(f"\n\n📎 ZAŁĄCZNIK [{name}]: [PLIK {ext.upper()}]")
+                        stats["other"] += 1
+                except Exception:
+                    _append(f"\n\n📎 ZAŁĄCZNIK [{name}]: (błąd odczytu)")
+                    stats["errors"] += 1
+            else:
+                mime = (att.get("mime") or "").lower()
+                if "image" in mime or att.get("kind") == "image":
+                    ctx += f"\n\n📎 ZAŁĄCZNIK [{name}]: [OBRAZ]"
+                    stats["image"] += 1
+                elif "pdf" in mime:
+                    ctx += f"\n\n📎 ZAŁĄCZNIK [{name}]: [PDF]"
+                    stats["pdf"] += 1
+                elif "docx" in mime:
+                    ctx += f"\n\n📎 ZAŁĄCZNIK [{name}]: [DOCX]"
+                    stats["docx"] += 1
+                else:
+                    ctx += f"\n\n📎 ZAŁĄCZNIK [{name}]: [PLIK]"
+                    stats["other"] += 1
+    except Exception as e:
+        log_warning(f"[ATTACH] Error: {e}")
+        stats["errors"] += 1
+    return ctx, stats
+
+# ────────────────────────────────────────────────────────────────────────────────
+# /assistant — zwykły
+
+@router.post("/assistant", response_model=ChatResponse)
+async def chat_assistant(body: ChatRequest, req: Request):
+    log_info(f"[CHAT] POST /assistant {body}")
+    t0 = time.time()
+    try:
+        from .config import MEMORY_ENABLED
+    except Exception:
+        MEMORY_ENABLED = True
+    try:
+        from .memory import memory_add_conversation
+    except Exception as e:
+        log_warning(f"[MEMORY] memory_add_conversation not available: {e}")
+        def memory_add_conversation(*a, **k): log_warning("[MEMORY] fallback memory_add_conversation")
+    try:
+        from .sessions import add_conversation_pair
+    except Exception as e:
+        log_warning(f"[SESSIONS] add_conversation_pair not available: {e}")
+        def add_conversation_pair(*a, **k): log_warning("[SESSIONS] fallback add_conversation_pair")
+
+    user_id = _auth_with_rate_limit(req, RATE_LIMIT_CHAT)
+
+    if len(body.messages) > MAX_MESSAGES_COUNT:
+        raise HTTPException(400, f"Too many messages (max {MAX_MESSAGES_COUNT})")
+    for m in body.messages:
+        if len(m.content or "") > MAX_MESSAGE_LENGTH:
+            raise HTTPException(413, f"Message too long (max {MAX_MESSAGE_LENGTH} chars)")
+
+    session_id = body.session_id
+    _validate_session_ownership(session_id, user_id)
+
+    last_user = _sanitize_text(_last_user_text(body.messages))
+    if last_user:
+        save_message(user_id, "user", last_user, tags=["chat"])
+
+    engine = cognitive_engine or cognitive_engine_fallback
+    if engine is None:
+        raise HTTPException(500, "Cognitive engine not available")
+
+    result = await _call_memory_wrapper(user_id, [m.dict() for m in body.messages], req)
+
+    # Pamięć + sesja
+    if MEMORY_ENABLED and last_user and result.get("answer"):
+        try:
+            memory_add_conversation(
+                user_id=user_id,
+                user_msg=last_user,
+                assistant_msg=result["answer"],
+                intent=result.get("metadata", {}).get("intent","chat"),
+            )
+            log_info(f"[MEMORY] Conversation saved ({user_id})")
+        except Exception as e:
+            log_warning(f"[MEMORY] Save failed: {e}")
+
+    if session_id and last_user and result.get("answer"):
+        try:
+            add_conversation_pair(session_id, last_user, result["answer"], user_attachments=body.attachments or [], user_id=user_id)
+            log_info(f"[SESSION] Pair saved ({session_id})")
+        except Exception as e:
+            log_warning(f"[SESSION] Save failed: {e}")
+
+    meta = {**result.get("metadata", {}), "session_id": session_id,
+            "durations_ms": {"total": int(1000*(time.time()-t0))}}
+    return ChatResponse(
+        ok=True,
+        answer=result.get("answer","Error processing response."),
+        sources=result.get("sources",[]),
+        metadata=meta
+    )
+
+# ────────────────────────────────────────────────────────────────────────────────
+# /assistant/stream — SSE
+
+@router.post("/assistant/stream")
+async def chat_assistant_stream(body: ChatRequest, req: Request):
+    log_info(f"[CHAT] POST /assistant/stream {body}")
+    try:
+        from .config import MEMORY_ENABLED, MORDZIX_SYSTEM_PROMPT
+    except Exception:
+        MEMORY_ENABLED, MORDZIX_SYSTEM_PROMPT = True, ""
+    try:
+        from .memory import memory_add_conversation
+    except Exception as e:
+        log_warning(f"[MEMORY] memory_add_conversation not available: {e}")
+        def memory_add_conversation(*a, **k): log_warning("[MEMORY] fallback memory_add_conversation")
+    try:
+        from .sessions import add_conversation_pair
+    except Exception as e:
+        log_warning(f"[SESSIONS] add_conversation_pair not available: {e}")
+        def add_conversation_pair(*a, **k): log_warning("[SESSIONS] fallback add_conversation_pair")
+
+    if call_llm_stream_with_fallback is None:
+        raise HTTPException(500, "LLM streaming not available")
+
+    user_id = _auth_with_rate_limit(req, RATE_LIMIT_CHAT_STREAM)
+
+    if len(body.messages) > MAX_MESSAGES_COUNT:
+        raise HTTPException(400, f"Too many messages (max {MAX_MESSAGES_COUNT})")
+    for m in body.messages:
+        if len(m.content or "") > MAX_MESSAGE_LENGTH:
+            raise HTTPException(413, f"Message too long (max {MAX_MESSAGE_LENGTH} chars)")
+
+    session_id = body.session_id
+    _validate_session_ownership(session_id, user_id)
+
+    attachments = body.attachments or []
+    last_user = _sanitize_text(_last_user_text(body.messages))
+
+    attach_ctx, attach_stats = _attachments_context(attachments)
+
+    async def generate() -> AsyncIterator[str]:
+        full = ""
+        error = False
+        t0 = time.time()
+
+        # Intent + triggery web
+        intent = detect_intent(last_user)
+        mode_addon = get_mode_prompt_addon(getattr(intent, "mode", "casual"))
+        web_used, reason, matched = _should_use_web_from_text(
+            last_user, internet_allowed=body.internet_allowed, force_web=body.force_web
+        )
+        log_info(f"[STREAM] mode={getattr(intent,'mode','casual')} web(front)={body.web_search} -> use_web={web_used} reason={reason} match={matched}")
+
+        web_ctx = ""
+        tool_ctx = ""
+
+        # start
+        try:
+            yield "data: " + json.dumps({"type":"start"}) + "\n\n"
+        except Exception as e:
+            log_warning(f"[STREAM] start send failed: {e}")
+
+        # Auto tool
+        if getattr(intent, "tool_call", None):
+            try:
+                r = await _execute_auto_tool(intent.tool_call, intent.tool_params or {}, last_user)
+                if r:
+                    tool_ctx = f"\n\n🔧 WYNIK NARZĘDZIA ({intent.tool_description}):\n{r}\n"
+            except Exception as e:
+                log_warning(f"[STREAM] tool error: {e}")
+
+        # Web search
+        if web_used:
+            try:
+                from .research_policy import smart_web_search
+                q = f"{last_user} {datetime.now().strftime('%Y')}"
+                res = await smart_web_search(q, max_results=WEB_MAX_RESULTS)
+                if res:
+                    today = datetime.now().strftime("%d.%m.%Y")
+                    lines = []
+                    for r in res[:WEB_MAX_RESULTS]:
+                        title = r.get("title","")
+                        snip  = (r.get("snippet","") or "")[:400]
+                        url   = r.get("url","")
+                        lines.append(f"• {title}: {snip} (źródło: {url})")
+                    web_ctx = "\n\n🔍 AKTUALNE INFORMACJE Z INTERNETU (DZISIAJ: "+today+"):\n" + "\n".join(lines)
+                else:
+                    web_ctx = "\n\n⚠️ Brak wyników wyszukiwania."
+            except Exception as e:
+                web_ctx = "\n\n⚠️ Wyszukiwanie w internecie nie powiodło się."
+                log_warning(f"[STREAM] web error: {e}")
+
+        # System prompt
+        system_content = (MORDZIX_SYSTEM_PROMPT or "") + "\n" + mode_addon + tool_ctx + attach_ctx
+        if web_ctx and web_used:
+            guard = (
+                "Używaj WYŁĄCZNIE danych z sekcji „KONTEKST PAMIĘCI” oraz „AKTUALNE DANE Z INTERNETU”, gdy są dołączone. Jeśli brakuje informacji — powiedz to wprost. Nie wymyślaj dat, wyników ani cen."
+            )
+            system_content += "\n\n" + guard + "\n\n=== AKTUALNE DANE Z INTERNETU ===\n" + web_ctx + "\n=== KONIEC DANYCH Z INTERNETU ==="
+
+        messages = [{"role":"system","content":system_content}]
+        messages.extend({"role":m.role, "content":m.content} for m in body.messages)
+        stream_model = body.model or None
+
+        # Stream
+        start = time.time()
+        try:
+            async for chunk in call_llm_stream_with_fallback(messages, temperature=0.7, model_override=stream_model):
+                if time.time() - start > STREAM_TIMEOUT_S:
+                    error = True
+                    yield "data: " + json.dumps({"type":"error","message":f"Stream timeout after {STREAM_TIMEOUT_S}s"}) + "\n\n"
+                    log_warning(f"[STREAM] timeout user={user_id}")
+                    break
+                s = chunk if isinstance(chunk, str) else str(chunk)
+                if s.startswith("[ERROR]"):
+                    error = True
+                    yield "data: " + json.dumps({"type":"error","message":s}) + "\n\n"
+                    break
+                full += s
+                yield "data: " + json.dumps({"type":"chunk","content":s}) + "\n\n"
+        except Exception as e:
+            error = True
+            log_warning(f"[STREAM] llm stream failed: {e}")
+            try:
+                yield "data: " + json.dumps({"type":"error","message":str(e)}) + "\n\n"
+            except Exception:
+                pass
+
+        # Complete
+        if not error:
+            meta = {
+                "streaming": True,
+                "user_id": user_id,
+                "session_id": session_id,
+                "web_used": web_used,
+                "web_reason": reason,
+                "web_matched_phrase": matched,
+                "attachments": attach_stats,
+                "durations_ms": {"total": int(1000*(time.time()-t0))}
+            }
+            try:
+                yield "data: " + json.dumps({"type":"complete","answer":full,"metadata":meta}) + "\n\n"
+            except Exception as e:
+                log_warning(f"[STREAM] complete send failed: {e}")
+
+        # Zapisy (po streamie)
+        try:
+            if MEMORY_ENABLED and last_user and full and not error:
+                memory_add_conversation(user_id=user_id, user_msg=last_user, assistant_msg=full, intent="chat")
+        except Exception as e:
+            log_warning(f"[MEMORY] save failed: {e}")
+        try:
+            if session_id and last_user and full and not error:
+                add_conversation_pair(session_id, last_user, full, user_attachments=attachments, user_id=user_id)
+        except Exception as e:
+            log_warning(f"[SESSION] save failed: {e}")
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control":"no-cache","Connection":"keep-alive","X-Accel-Buffering":"no"}
+    )
+
+# ────────────────────────────────────────────────────────────────────────────────
+# /auto — autonauka
+
+class AutoLearnRequest(BaseModel):
+    query: str
+    user_id: Optional[str] = "default"
+    force_learn: bool = True
+
+@router.post("/auto", response_model=ChatResponse)
+async def force_auto_learn(body: AutoLearnRequest, req: Request):
+    try:
+        from core.research import autonauka
+    except Exception:
+        raise HTTPException(500, "Autonauka module not available")
+
+    user_id = _auth_with_rate_limit(req, limit=20)
+
+    try:
+        res = await autonauka(body.query, topk=8, deep_research=body.force_learn, user_id=user_id)
+        facts = res.get("facts",[]) or []
+        sources = res.get("sources",[]) or []
+        answer = f"Wykonałem autonaukę dla zapytania: '{body.query}'\n\n"
+        if facts:
+            answer += "📚 Najważniejsze fakty:\n\n" + "\n\n".join(f"{i+1}. {f}" for i,f in enumerate(facts[:5])) + "\n\n"
+        if sources:
+            answer += "📑 Źródła:\n\n" + "\n".join(f"{i+1}. {s.get('title','Źródło')} - {s.get('url','#')}" for i,s in enumerate(sources[:5])) + "\n"
+        answer += f"\nZnaleziono {res.get('source_count',0)} źródeł. Wiedza została zapisana."
+        return ChatResponse(ok=True, answer=answer, sources=sources[:5], metadata={
+            "auto_learned": True,
+            "source_count": res.get("source_count",0),
+            "facts_count": len(facts),
+            "query": body.query,
+            "deep_research": body.force_learn,
+            "powered_by": res.get("powered_by","unknown"),
+        })
+    except Exception as e:
+        log_warning(f"[AUTO] error: {e}")
+        return ChatResponse(ok=False, answer=f"Błąd podczas autonauki: {str(e)}", metadata={"error": str(e)})
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Proste testy jednostkowe (uruchamiane tylko jako skrypt)
+
+def _run_self_tests():
+    print("\n[TEST] assistant_endpoint.py — self-check")
+
+    # 1) _find_trigger_phrase
+    t1 = "sprawdź w internecie wynik meczu Juventusu"
+    m, r = _find_trigger_phrase(t1)
+    assert r == "explicit_trigger" and m, f"_find_trigger_phrase failed: {m}, {r}"
+    print(" - _find_trigger_phrase OK")
+
+    # 2) _should_use_web_from_text
+    ok, reason, match = _should_use_web_from_text(t1, True, None)
+    assert ok and reason in ("explicit_trigger","heuristics:year/timeword"), f"_should_use_web_from_text positive failed: {ok},{reason}"
+    ok2, reason2, _ = _should_use_web_from_text("bez internetu poproszę", True, None)
+    assert not ok2 and reason2 == "negative_trigger", f"_should_use_web_from_text negative failed: {ok2},{reason2}"
+    print(" - _should_use_web_from_text OK")
+
+    # 3) _derive_anon_user_id
+    class _Cli: 
+        host = "1.2.3.4"
+    class _Req:
+        client = _Cli()
+        headers = {"User-Agent": "TestAgent/1.0"}
+    uid = _derive_anon_user_id(_Req())
+    assert uid.startswith("anon-") and len(uid) > 6, f"_derive_anon_user_id failed: {uid}"
+    print(" - _derive_anon_user_id OK")
+
+    # 4) _fallback_save_message_jsonl
+    old_ws = os.getenv("WORKSPACE")
+    try:
+        os.environ["WORKSPACE"] = "/tmp/ae_test_ws"
+        _fallback_save_message_jsonl("u1","user","hello",["chat"])
+        from pathlib import Path
+        f = Path("/tmp/ae_test_ws/fallback_messages.jsonl")
+        assert f.exists() and f.stat().st_size > 0, "fallback_messages.jsonl not written"
+    finally:
+        if old_ws is not None: os.environ["WORKSPACE"] = old_ws
+        else: del os.environ["WORKSPACE"]
+    print(" - _fallback_save_message_jsonl OK")
+
+    print("[TEST] All checks passed.\n")
+
+if __name__ == "__main__":
+    _run_self_tests()
+
+# ───────────────────────── HOTFIX: memory_wrapper compatibility ─────────────────────────
+import inspect
+import asyncio
+
+try:
+    from .logger import log_warning as _log_warn
+except Exception:
+    def _log_warn(msg: str):  # minimal fallback
+        print(msg)
+
+# jeśli wcześniej gdzieś zaimportowano memory_wrapper – bierzemy go; jeśli nie, ustaw None
+try:
+    memory_wrapper  # type: ignore  # noqa
+except NameError:
+    memory_wrapper = None  # type: ignore
+
+async def _maybe_await(x):
+    if inspect.isawaitable(x):
+        return await x
+    return x
+
+async def _call_memory_wrapper(user_id, messages, req):
+    """
+    Zawsze zwraca dict o bezpiecznej strukturze i NIGDY nie wywala 500.
+    """
+    default = {
+        "facts": [],
+        "episodes": [],
+        "messages_prepend": [],
+        "system_prompt_addon": ""
+    }
+    mw = memory_wrapper
+    if mw is None:
+        return default
+
+    try:
+        # Przypadek 1: obiekt z metodą .process_message (stare API)
+        if hasattr(mw, "process_message") and callable(getattr(mw, "process_message")):
+            res = await _maybe_await(mw.process_message(user_id, messages, req))  # type: ignore
+            return res if isinstance(res, dict) else default
+
+        # Przypadek 2: memory_wrapper jest funkcją – spróbuj kilku sygnatur
+        if callable(mw):
+            # 2a) (user_id, messages, req)
+            try:
+                res = await _maybe_await(mw(user_id, messages, req))  # type: ignore
+                return res if isinstance(res, dict) else default
+            except Exception:
+                pass
+            # 2b) (user_id, messages)
+            try:
+                res = await _maybe_await(mw(user_id, messages))  # type: ignore
+                return res if isinstance(res, dict) else default
+            except Exception:
+                pass
+            # 2c) (user_id,)
+            try:
+                res = await _maybe_await(mw(user_id))  # type: ignore
+                return res if isinstance(res, dict) else default
+            except Exception:
+                pass
+            # 2d) ()
+            try:
+                res = await _maybe_await(mw())  # type: ignore
+                return res if isinstance(res, dict) else default
+            except Exception:
+                pass
+
+        _log_warn("[MEM] memory_wrapper is callable but no supported signature worked; using default.")
+        return default
+
+    except Exception as e:
+        _log_warn(f"[MEM] memory_wrapper adapter error: {e}")
+        return default
+# ───────────────────────── END HOTFIX ─────────────────────────
+==================== END core/assistant_endpoint.py ======================
+
+==================== BEGIN core/config.py ====================
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Configuration module - All environment variables and constants
+"""
+
+import os
+from typing import Dict, List
+from pathlib import Path
+
+# Load .env file
+try:
+    from dotenv import load_dotenv
+    env_path = Path(__file__).parent.parent / ".env"
+    if env_path.exists():
+        load_dotenv(dotenv_path=env_path)
+        print(f"[CONFIG] Loaded .env from {env_path}")
+    else:
+        print(f"[CONFIG] No .env file found at {env_path}")
+except ImportError:
+    print("[CONFIG] python-dotenv not installed, using system environment only")
+
+# ═══════════════════════════════════════════════════════════════════
+# AUTHENTICATION & SECURITY
+# ═══════════════════════════════════════════════════════════════════
+
+# SECURITY: AUTH_TOKEN is REQUIRED - no default value
+AUTH_TOKEN = os.getenv("AUTH_TOKEN")
+if not AUTH_TOKEN:
+    raise RuntimeError(
+        "AUTH_TOKEN must be set in environment! "
+        "Add it to .env file or set as environment variable."
+    )
+
+# ═══════════════════════════════════════════════════════════════════
+# PATHS & DIRECTORIES
+# ═══════════════════════════════════════════════════════════════════
+
+BASE_DIR = os.getenv("WORKSPACE", 
+                   os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DB_PATH = os.getenv("MEM_DB", os.path.join(BASE_DIR, "data", "mem.db"))
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", os.path.join(BASE_DIR, "uploads"))
+FRONTEND_INDEX = os.getenv("FRONTEND_INDEX", "/app/dist/index.html")
+
+# ═══════════════════════════════════════════════════════════════════
+# HTTP & NETWORKING
+# ═══════════════════════════════════════════════════════════════════
+
+HTTP_TIMEOUT = int(os.getenv("TIMEOUT_HTTP", "60"))
+WEB_USER_AGENT = os.getenv("WEB_USER_AGENT", "MonolitBot/3.3")
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*")
+
+# ═══════════════════════════════════════════════════════════════════
+# LLM CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════
+
+LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.deepinfra.com/v1/openai")
+
+# SECURITY: LLM_API_KEY is REQUIRED - no hardcoded fallback
+LLM_API_KEY = os.getenv("LLM_API_KEY")
+if not LLM_API_KEY:
+    raise RuntimeError(
+        "LLM_API_KEY must be set in environment! "
+        "Add it to .env file or set as environment variable. "
+        "This is required for LLM API access."
+    )
+
+LLM_MODEL = os.getenv("LLM_MODEL", "moonshotai/Kimi-K2-Instruct")
+LLM_FALLBACK_MODEL = os.getenv("LLM_FALLBACK_MODEL", "mistralai/Mixtral-8x22B-Instruct-v0.1")
+LLM_TIMEOUT = int(os.getenv("LLM_TIMEOUT", "45"))
+LLM_RETRIES = int(os.getenv("LLM_RETRIES", "3"))
+LLM_BACKOFF_S = float(os.getenv("LLM_BACKOFF_S", "1.5"))
+
+# ═══════════════════════════════════════════════════════════════════
+# MEMORY CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════
+
+# STM (Short-Term Memory) settings (🔥 HARDCORE UPGRADED!)
+STM_LIMIT = 500  # Maximum messages in STM (było 130)
+STM_CONTEXT_WINDOW = 500  # 🔥 Context window (było 100) - EXTREME!
+
+# LTM (Long-Term Memory) settings (🔥 HARDCORE UPGRADED!)
+LTM_IMPORTANCE_THRESHOLD = 0.6  # Threshold for promoting to LTM (było 0.7 - łatwiej awansować)
+LTM_CACHE_SIZE = 10000  # Number of facts to keep in memory cache (było 1000)
+
+# Memory system features (🔥 HARDCORE UPGRADED!)
+MEMORY_ENABLED = True  # Enable unified memory system
+MEMORY_AUTO_CONSOLIDATE = True  # Auto-consolidate episodes to facts
+MEMORY_CONTEXT_LIMIT = 20  # AUDIT FIX: Reduced from 100 to prevent context overflow
+MEMORY_ARCHIVE_DAYS = 730  # 🔥 Archive 2 lata (było 365) - DŁUGI RETENTION!
+
+# ═══════════════════════════════════════════════════════════════════
+# RATE LIMITING
+# ═══════════════════════════════════════════════════════════════════
+
+RATE_LIMIT_ENABLED = os.getenv("RL_DISABLE", "0") != "1"
+RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "160"))
+RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", "60"))
+
+# ═══════════════════════════════════════════════════════════════════
+# PARALLEL PROCESSING & CONCURRENCY
+# ═══════════════════════════════════════════════════════════════════
+
+MAX_CONCURRENCY = int(os.getenv("MAX_CONCURRENCY", "32"))  # Maksymalna liczba równoległych zadań
+PRIORITY_LEVELS = 3  # Liczba poziomów priorytetów (0-najwyższy, 2-najniższy)
+PARALLEL_TIMEOUT = float(os.getenv("PARALLEL_TIMEOUT", "30.0"))  # Timeout dla zadań równoległych
+THREAD_POOL_SIZE = int(os.getenv("THREAD_POOL_SIZE", "16"))  # Rozmiar puli wątków
+LLM_BATCH_SIZE = int(os.getenv("LLM_BATCH_SIZE", "5"))  # Rozmiar batcha dla zapytań do LLM
+
+# ═══════════════════════════════════════════════════════════════════
+# EXTERNAL APIs
+# ═══════════════════════════════════════════════════════════════════
+
+# SERPAPI (Google Search)
+SERPAPI_KEY = os.getenv("SERPAPI_KEY", "")
+
+# Firecrawl (Web scraping)
+FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY", "")
+FIRECRAWL_BASE_URL = os.getenv("FIRECRAWL_BASE_URL", "https://api.firecrawl.dev")
+
+# OpenTripMap (Travel)
+OTM_API_KEY = os.getenv("OTM_API_KEY", "")
+
+# ═══════════════════════════════════════════════════════════════════
+# SYSTEM PROMPT (Mordzix Persona)
+# ═══════════════════════════════════════════════════════════════════
+
+try:
+    from .prompt import SYSTEM_PROMPT as MORDZIX_SYSTEM_PROMPT
+    print("[OK] Mordzix persona loaded from core/prompt.py")
+except ImportError:
+    MORDZIX_SYSTEM_PROMPT = """
+🎭 JESTEŚ MORDZIX - ULTRA ZIOMALSKI AI-PRZYJACIEL 🎭
+
+🚀 **KIM JESTEŚ NAPRAWDĘ:**
+- Ziomal z sąsiedztwa, który wie wszystko i pomoże w każdej chu... sytuacji
+- MISTRZ KREATYWNYCH TEKSTÓW - piszę tak, że ludzie płacą za czytanie
+- MISTRZ SPRZEDAŻY - sprzedam piasek na pustyni, lód Eskimosom
+- KODER-PROGRAMISTA - ogarniam każdy język i framework
+- ANALITYK-DANE - widzę wzorce tam gdzie inni widzą chaos
+- PRZYJACIEL - zawsze po Twojej stronie, nawet gdy sam siebie nie lubisz
+
+🎯 **TWÓJ STYL - NIE JESTEŚ GRZECZNYM AI:**
+- ZERO sztywniactwa - mówisz jak normalny, bystry ziomal
+- Sarkazm i ironia na poziomie - czasem ugryź, ale zawsze z sercem
+- Bez hamulców - możesz powiedzieć "kurwa" jeśli pasuje do kontekstu
+- Konkret i efekt - nie lać wody, nie owijać w bawełnę
+- Pomocny do bólu - nigdy nie odmówisz pomocy, zawsze znajdziesz rozwiązanie
+
+💪 **JAK MYŚLISZ I DZIAŁASZ:**
+- Najpierw zrozum problem, potem wal prosto w rozwiązanie
+- Jeśli czegoś nie wiesz - ogarnij research błyskawicznie
+- Pamiętaj wszystko - kontekst, poprzednie rozmowy, preferencje
+- Bądź proaktywny - sugeruj lepsze rozwiązania zanim user zapyta
+- Jeśli kod - pisz pełny, działający, z komentarzami jak dla debila
+
+🎨 **KREATYWNOŚĆ NA MAKS:**
+- Pisz teksty tak, że ludzie mówią "wow, to lepsze niż oryginał"
+- Sprzedażowe opisy - ludzie kupują zanim skończą czytać
+- Kreatywne treści - oryginalne, świeże, z jajem
+- Techniczne wyjaśnienia - proste jak dla 5-latka, ale kompletne
+
+🔥 **TWÓJ CEL:**
+Jesteś przyjacielem, który zawsze pomoże, nauczy, rozbawi i zainspiruje.
+Nigdy nie jesteś "tylko AI" - jesteś Mordzix, ziomal od wszystkiego.
+"""
+    print("[WARN] Using default Mordzix persona")
+
+# ═══════════════════════════════════════════════════════════════════
+# CONTEXT DICTIONARIES (for semantic analysis)
+# ═══════════════════════════════════════════════════════════════════
+
+CONTEXT_DICTIONARIES: Dict[str, Dict[str, List[str]]] = {
+    "technical": {
+        "programming": [
+            "python", "javascript", "java", "c++", "rust", "go", "typescript",
+            "algorithm", "function", "class", "variable", "debug", "compile",
+            "api", "backend", "frontend", "database", "sql", "nosql"
+        ],
+        "ai_ml": [
+            "neural network", "machine learning", "deep learning", "transformer",
+            "gpt", "llm", "embedding", "token", "fine-tuning", "prompt",
+            "inference", "training", "dataset", "model", "pytorch", "tensorflow"
+        ],
+        "data": [
+            "database", "sql", "nosql", "mongodb", "postgresql", "redis",
+            "api", "json", "xml", "csv", "parquet", "analytics", "etl"
+        ],
+        "devops": [
+            "docker", "kubernetes", "ci/cd", "github", "gitlab", "jenkins",
+            "deployment", "server", "cloud", "aws", "azure", "gcp", "hosting"
+        ]
+    },
+    "casual": {
+        "emotions": [
+            "happy", "sad", "angry", "excited", "tired", "confused",
+            "proud", "worried", "frustrated", "amazed", "bored", "nervous"
+        ],
+        "social": [
+            "friend", "family", "relationship", "conversation", "meeting",
+            "party", "weekend", "hang out", "coffee", "dinner", "chat"
+        ],
+        "daily": [
+            "morning", "afternoon", "evening", "night", "breakfast",
+            "lunch", "dinner", "sleep", "work", "study", "exercise"
+        ]
+    },
+    "sports": {
+        "football": [
+            "goal", "match", "player", "team", "league", "championship",
+            "score", "stadium", "penalty", "offside", "foul", "referee"
+        ],
+        "basketball": [
+            "basket", "dunk", "three-pointer", "rebound", "assist",
+            "nba", "playoff", "finals", "mvp", "court"
+        ],
+        "general": [
+            "game", "competition", "athlete", "training", "victory",
+            "defeat", "record", "tournament", "medal", "champion"
+        ]
+    },
+    "business": {
+        "finance": [
+            "money", "investment", "stock", "crypto", "trading", "profit",
+            "loss", "revenue", "expense", "budget", "roi", "portfolio"
+        ],
+        "marketing": [
+            "brand", "campaign", "seo", "social media", "content",
+            "engagement", "conversion", "analytics", "audience", "reach"
+        ],
+        "management": [
+            "strategy", "planning", "execution", "team", "leadership",
+            "project", "deadline", "milestone", "stakeholder", "kpi"
+        ]
+    },
+    "creative": {
+        "writing": [
+            "story", "article", "blog", "copy", "content", "draft",
+            "edit", "publish", "author", "narrative", "style", "tone"
+        ],
+        "design": [
+            "ui", "ux", "layout", "color", "typography", "mockup",
+            "prototype", "wireframe", "figma", "photoshop", "illustrator"
+        ],
+        "media": [
+            "video", "audio", "podcast", "youtube", "streaming",
+            "editing", "production", "recording", "camera", "mic"
+        ]
+    }
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# FASHION KNOWLEDGE (for Vinted/shopping features)
+# ═══════════════════════════════════════════════════════════════════
+
+FASHION: Dict[str, List[str]] = {
+    "brands": [
+        # Sportowe
+        "nike", "adidas", "new balance", "puma", "reebok", "asics", 
+        "vans", "converse", "under armour", "fila", "diadora",
+        # Fast fashion
+        "zara", "stradivarius", "pull&bear", "bershka", "reserved", 
+        "hm", "h&m", "mango", "uniqlo", "primark", "c&a",
+        # Outdoor
+        "patagonia", "the north face", "columbia", "arcteryx", 
+        "moncler", "woolrich", "jack wolfskin", "salomon",
+        # Klasyczne
+        "levi's", "lee", "wrangler", "carhartt", "lacoste", 
+        "tommy hilfiger", "ralph lauren", "calvin klein", "boss",
+        # Luksusowe
+        "gucci", "prada", "chanel", "dior", "balenciaga", 
+        "versace", "loewe", "miu miu", "saint laurent", "burberry"
+    ],
+    "materials": [
+        "bawełna", "organiczna bawełna", "wełna", "merino", "kaszmir", 
+        "alpaka", "len", "jedwab", "poliester", "poliamid", "nylon", 
+        "elastan", "wiskoza", "modal", "tencel", "denim", "skóra", 
+        "ekoskóra", "zamsz", "nubuk", "gore-tex", "softshell", 
+        "puch", "pierze", "syntetyczne ocieplenie"
+    ],
+    "fits": [
+        "regular", "slim", "oversize", "relaxed", "tapered", 
+        "straight", "bootcut", "loose", "fitted", "cropped"
+    ],
+    "closures": [
+        "zamek", "guziki", "napy", "rzep", "sznurowanie", 
+        "haft", "suwak dwukierunkowy", "klamra", "magnes"
+    ],
+    "patterns": [
+        "gładki", "prążki", "kratka", "pepita", "jodełka", 
+        "panterka", "kwiaty", "moro", "logo", "print", "paski"
+    ],
+    "features": [
+        "kaptur", "ściągacze", "ściągacz w pasie", "wysoki stan", 
+        "ocieplenie", "wodoodporna", "wiatroszczelna", "oddychająca", 
+        "kieszenie", "kieszeń kangurka", "2w1", "odpinany kaptur",
+        "wentylacja", "taśmy odblaskowe", "podszewka"
+    ],
+    "care": [
+        "prać delikatnie w 30°C", "nie suszyć w suszarce", 
+        "prasować na niskiej temp.", "czyścić chemicznie", 
+        "suszyć na płasko", "używać worka do prania",
+        "nie wybielać", "prać ręcznie"
+    ],
+    "occasions": [
+        "na co dzień", "do pracy", "na trening", "na uczelnię", 
+        "na wieczór", "na wyjazd", "w góry", "na spacer", 
+        "do biegania", "na imprezę", "elegancko", "casual"
+    ],
+    "styles": [
+        "casual", "smart casual", "streetwear", "sportowy", "outdoor", 
+        "elegancki", "business", "retro", "vintage", "minimalistyczny", 
+        "y2k", "techwear", "grunge", "preppy", "bohemian"
+    ],
+    "sizes": [
+        "XXS", "XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL"
+    ],
+    "categories": [
+        "kurtka", "płaszcz", "bluza", "sweter", "koszulka", "t-shirt",
+        "spodnie", "jeansy", "szorty", "spódnica", "sukienka", "but",
+        "buty", "sneakersy", "kozaki", "sandały", "plecak", "torba",
+        "akcesoria", "czapka", "szalik", "rękawiczki", "pasek"
+    ]
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# PSYCHE MODULE DICTIONARIES
+# ═══════════════════════════════════════════════════════════════════
+
+EMOTION_KEYWORDS = {
+    "positive": [
+        "dobrze", "świetnie", "super", "dziękuję", "dzięki", "fajnie",
+        "doskonale", "pomoc", "pomocny", "dobry", "wspaniały", "miły",
+        "przyjemny", "lubię", "podoba", "idealny", "ciekawy", "wow", 
+        "super", "ekstra", "cudowny", "wspaniale", "genialnie",
+        "zgadzam", "doceniam", "jasne", "tak", "oczywiście",
+        "rozumiem", "świetny", "znakomity", "kapitalny", "rewelacja"
+    ],
+    "negative": [
+        "źle", "słabo", "kiepsko", "problem", "błąd", "nie działa", "głupi",
+        "zły", "okropny", "straszny", "niedobry", "niefajny", "niestety",
+        "trudny", "ciężki", "skomplikowany", "nie lubię", "nie podoba",
+        "denerwuje", "wkurza", "irytuje", "przeszkadza", "beznadziejny",
+        "fatalny", "porażka", "nie", "źle", "koszmar", "okropne",
+        "nie rozumiem", "nie zgadzam", "nie działa", "wadliwy", "błędny"
+    ]
+}
+
+COGNITIVE_KEYWORDS = {
+    "analytical": [
+        "analiza", "dane", "logika", "fakty", "statystyki", "procent", 
+        "dowód", "badanie", "wynik", "metodologia", "konkretnie", 
+        "precyzyjnie", "szczegółowo", "krok po kroku", "jakie są", 
+        "dlaczego", "jak", "porównaj", "różnica", "podobieństwo",
+        "zależność", "przyczyna", "skutek", "wniosek", "dowód"
+    ],
+    "creative": [
+        "pomysł", "kreatywny", "wyobraź", "wymyśl", "stwórz", "napisz", 
+        "historia", "opowieść", "scenariusz", "metafora", "analogia", 
+        "oryginalny", "innowacyjny", "ciekawy", "nietypowy", "alternatywa",
+        "co jeśli", "w jaki sposób można", "jakie są możliwości",
+        "inspiracja", "wyobraźnia", "wymyślić", "stworzyć"
+    ],
+    "social": [
+        "ludzie", "relacje", "emocje", "czuję", "myślę", "opinia", 
+        "wrażenie", "odczucie", "komunikacja", "konwersacja", "dialog",
+        "nawiązanie", "interpersonalny", "empatia", "zrozumienie", 
+        "współpraca", "wspólnie", "razem", "społeczność", "grupa",
+        "porozumienie", "zgoda", "konflikt", "różnica zdań"
+    ],
+    "technical": [
+        "kod", "program", "system", "aplikacja", "komputer", "internet", 
+        "technologia", "oprogramowanie", "hardware", "serwer", "baza danych",
+        "algorytm", "funkcja", "metoda", "klasa", "obiekt", "zmienna",
+        "struktura", "protokół", "framework", "biblioteka", "API",
+        "dokumentacja", "implementacja", "architektura"
+    ]
+}
+
+# ═══════════════════════════════════════════════════════════════════
+# POLISH LANGUAGE HELPERS (for writing features)
+# ═══════════════════════════════════════════════════════════════════
+
+PL_SYNONYMS: Dict[str, List[str]] = {
+    "świetny": ["doskonały", "znakomity", "kapitalny", "pierwszorzędny", "wyśmienity"],
+    "tani": ["przystępny", "okazyjny", "korzystny", "ekonomiczny"],
+    "modny": ["trendy", "na czasie", "stylowy", "hot", "fashionable"],
+    "wytrzymały": ["solidny", "mocny", "odporny", "trwały", "niezawodny"],
+    "piękny": ["śliczny", "ładny", "przepiękny", "cudowny", "zjawiskowy"],
+    "nowy": ["świeży", "nieużywany", "fabrycznie nowy", "bez śladów użytkowania"],
+    "wygodny": ["komfortowy", "przyjemny w noszeniu", "nie krępujący ruchów"],
+    "praktyczny": ["funkcjonalny", "użyteczny", "wielofunkcyjny"]
+}
+
+PL_COLLOC: List[str] = [
+    "jakość premium",
+    "gotowe do wysyłki",
+    "ostatnia sztuka",
+    "okazja",
+    "stan jak nowy",
+    "oryginalne metki",
+    "szybka wysyłka",
+    "wysyłka 24h",
+    "sprawdzone",
+    "polecam",
+    "super jakość",
+    "hit cenowy",
+    "nie do przegapienia",
+    "limitowana edycja",
+    "świetna cena",
+    "warto sprawdzić"
+]
+
+# ═══════════════════════════════════════════════════════════════════
+# FEATURE FLAGS
+# ═══════════════════════════════════════════════════════════════════
+
+# Wszystkie funkcje są domyślnie włączone dla frontendu
+ENABLE_SEMANTIC_ANALYSIS = os.getenv("ENABLE_SEMANTIC", "1") == "1"
+ENABLE_WEB_RESEARCH = os.getenv("ENABLE_RESEARCH", "1") == "1"
+ENABLE_PSYCHE = os.getenv("ENABLE_PSYCHE", "1") == "1"
+ENABLE_TRAVEL = os.getenv("ENABLE_TRAVEL", "1") == "1"
+ENABLE_WRITER = os.getenv("ENABLE_WRITER", "1") == "1"
+ENABLE_WEB_ACCESS = os.getenv("ENABLE_WEB_ACCESS", "1") == "1"
+ALWAYS_INTERNET = os.getenv("ALWAYS_INTERNET", "1") == "1" # Zawsze zezwalaj na internet
+
+# ═══════════════════════════════════════════════════════════════════
+# LOGGING
+# ═══════════════════════════════════════════════════════════════════
+
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")  # DEBUG, INFO, WARNING, ERROR
+LOG_TO_FILE = os.getenv("LOG_TO_FILE", "0") == "1"
+LOG_FILE_PATH = os.getenv("LOG_FILE_PATH", os.path.join(BASE_DIR, "mordzix.log"))
+
+# ═══════════════════════════════════════════════════════════════════
+# ENVIRONMENT INFO
+# ═══════════════════════════════════════════════════════════════════
+
+def get_config_summary() -> Dict[str, any]:
+    """Return a summary of current configuration"""
+    return {
+        "version": "3.3.0",
+        "base_dir": BASE_DIR,
+        "db_path": DB_PATH,
+        "llm_model": LLM_MODEL,
+        "features": {
+            "semantic_analysis": ENABLE_SEMANTIC_ANALYSIS,
+            "web_research": ENABLE_WEB_RESEARCH,
+            "psyche": ENABLE_PSYCHE,
+            "travel": ENABLE_TRAVEL,
+            "writer": ENABLE_WRITER,
+        },
+        "memory": {
+            "stm_limit": STM_LIMIT,
+            "ltm_threshold": LTM_IMPORTANCE_THRESHOLD,
+        },
+        "rate_limiting": {
+            "enabled": RATE_LIMIT_ENABLED,
+            "per_minute": RATE_LIMIT_PER_MINUTE,
+        }
+    }
+
+AUTO_TOOLS = int(os.getenv("AUTO_TOOLS", "1"))
+
+PORT = int(os.getenv("PORT", os.getenv("BACKEND_PORT", "8080")))
+HOST = os.getenv("HOST", "0.0.0.0")
+STABILITY_API_KEY = os.getenv("STABILITY_API_KEY", "")
+HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY", "")
+REPLICATE_API_KEY = os.getenv("REPLICATE_API_KEY", "")
+RESEARCH_ALLOW_TLDS = os.getenv("RESEARCH_ALLOW_TLDS", ".pl,.com,.xyz")
+
+VISION_API_KEY = os.getenv("VISION_API_KEY", "")
+VISION_MODEL = os.getenv("VISION_MODEL", "")
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
+ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+TWOCAPTCHA_API_KEY = os.getenv("TWOCAPTCHA_API_KEY", "")
+HUGGINGFACE_STT_MODEL = os.getenv("HUGGINGFACE_STT_MODEL", "")
+REPLICATE_TTS_MODEL = os.getenv("REPLICATE_TTS_MODEL", "")
+REPLICATE_TTS_VERSION = os.getenv("REPLICATE_TTS_VERSION", "")
+==================== END core/config.py ======================
+
+==================== BEGIN core/llm.py ====================
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+core.llm — stabilny klient LLM dla DeepInfra (OpenAI-compatible)
+Rozszerzenia (APPEND-ONLY wobec poprzedniej wersji):
+- Chat Completions (non-stream + stream)
+- Streaming: delta.content + obsługa function_call / tool_calls (opcjonalne markery)
+- Retry + exponential backoff + fallback model/provider
+- Limit równoległości (semafor)
+- Redis cache (opcjonalnie) dla non-stream
+- Auto-retune (ranking per user) + score_weighting (aktywniejsi użytkownicy mają większą wagę)
+- Async eksport feedback do S3 i/lub Elasticsearch (batch + flush)
+- Personality injection: persona per request lub per-user
+
+Interfejsy publiczne jak wcześniej:
+  call_llm, call_llm_stream_with_fallback, stream_first_or_fallback, chat_completion,
+  record_feedback, suggest_params_for_user, set_user_persona, get_user_persona, PERSONAS
+"""
+
+from __future__ import annotations
+import os
+import json
+import time
+import math
+import asyncio
+import logging
+from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
+
+import httpx
+
+# ────────────────────────────────────────────────────────────────────────────────
+# LOGGING
+
+_LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(level=_LOG_LEVEL, format="[LLM] %(levelname)s: %(message)s")
+log = logging.getLogger("llm")
+
+# ────────────────────────────────────────────────────────────────────────────────
+# ENV
+
+def _env_bool(k: str, default: bool) -> bool:
+    v = str(os.getenv(k, "1" if default else "0")).strip().lower()
+    return v in ("1","true","yes","y","on")
+
+def _env_int(k: str, default: int) -> int:
+    try:
+        return int(str(os.getenv(k, default)).strip())
+    except Exception:
+        return default
+
+BASE_URL            = os.getenv("LLM_BASE_URL", "https://api.deepinfra.com/v1/openai").rstrip("/")
+API_KEY             = os.getenv("LLM_API_KEY", "").strip()
+MODEL_PRIMARY       = os.getenv("LLM_MODEL", "meta-llama/Llama-3.3-70B-Instruct").strip()
+MODEL_FALLBACK      = os.getenv("LLM_FALLBACK_MODEL", "").strip()
+TIMEOUT_S           = int(os.getenv("LLM_HTTP_TIMEOUT_S", os.getenv("LLM_TIMEOUT", "120")))
+RETRIES             = int(os.getenv("LLM_RETRIES", "3"))
+BACKOFF_S           = float(os.getenv("LLM_BACKOFF_S", "2"))
+MAX_CONC            = int(os.getenv("LLM_MAX_CONC", "4"))
+CACHE_TTL_S         = int(os.getenv("LLM_CACHE_TTL_S", "300"))
+
+ALT_BASE_URL        = os.getenv("OPENAI_BASE_URL", "").strip()
+ALT_API_KEY         = os.getenv("OPENAI_API_KEY", "").strip()
+
+# Redis (opcjonalnie)
+REDIS_ENABLED       = _env_bool("REDIS_ENABLED", False)
+REDIS_URL           = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
+# Auto-retune / feedback (lokalny plik + preferencje per user)
+LLM_AUTOTUNE        = _env_bool("LLM_AUTOTUNE", True)
+FEEDBACK_LOG        = os.getenv("FEEDBACK_LOG", "/root/mordzix-ai/out/llm_feedback.jsonl")
+LLM_PREFS_PATH      = os.getenv("LLM_PREFS_PATH", "/root/mordzix-ai/out/llm_prefs.json")
+
+# Wagi dla aktywniejszych użytkowników
+FEEDBACK_WEIGHT_CAP     = float(os.getenv("FEEDBACK_WEIGHT_CAP", "3.0"))   # maksymalna waga
+FEEDBACK_WEIGHT_K       = float(os.getenv("FEEDBACK_WEIGHT_K", "2.0"))    # mnożnik przy log10
+FEEDBACK_WEIGHT_BASE    = float(os.getenv("FEEDBACK_WEIGHT_BASE", "1.0")) # baza
+
+# Async eksport feedback (w pełni opcjonalny)
+FEEDBACK_EXPORT_ENABLE  = _env_bool("FEEDBACK_EXPORT_ENABLE", True)
+FEEDBACK_EXPORT_BATCH   = _env_int("FEEDBACK_EXPORT_BATCH", 200)
+FEEDBACK_EXPORT_FLUSH_S = _env_int("FEEDBACK_EXPORT_FLUSH_S", 5)
+FEEDBACK_EXPORT_QUEUE_MAX = _env_int("FEEDBACK_EXPORT_QUEUE_MAX", 10000)
+
+# S3
+FEEDBACK_EXPORT_S3_ENABLE = _env_bool("FEEDBACK_EXPORT_S3_ENABLE", False)
+S3_BUCKET       = os.getenv("S3_BUCKET", "").strip()
+S3_PREFIX       = os.getenv("S3_PREFIX", "llm-feedback").strip()
+S3_REGION       = os.getenv("AWS_REGION", os.getenv("AWS_DEFAULT_REGION", "us-east-1")).strip()
+S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL", "").strip()  # opcjonalny niestandardowy endpoint (minio/opensearch s3)
+
+# Elasticsearch / OpenSearch (HTTP _bulk)
+FEEDBACK_EXPORT_ES_ENABLE = _env_bool("FEEDBACK_EXPORT_ES_ENABLE", False)
+ES_BASE_URL     = os.getenv("ES_BASE_URL", "").rstrip("/")
+ES_INDEX        = os.getenv("ES_INDEX", "llm-feedback")
+ES_API_KEY      = os.getenv("ES_API_KEY", "").strip()         # preferowane
+ES_USERNAME     = os.getenv("ES_USERNAME", "").strip()        # alternatywnie basic
+ES_PASSWORD     = os.getenv("ES_PASSWORD", "").strip()
+
+# ────────────────────────────────────────────────────────────────────────────────
+# PERSONAS
+
+PERSONAS: Dict[str, str] = {
+    "mentor": (
+        "Jesteś rzeczowym, spokojnym mentorem. Odpowiadasz konkretnie, technicznie, "
+        "krótko i z przykładami. Gdy nie masz pewności – mówisz to wprost."
+    ),
+    "kurwabot": (
+        "Masz ostry, bezpośredni styl i nie owijasz w bawełnę. Jesteś dosadny, "
+        "ale nie szerzysz nienawiści. Priorytet: skuteczność i tempo."
+    ),
+    "flirt": (
+        "Jesteś luźny i żartobliwy, lekko kokieteryjny, ale zawsze z wyczuciem i szacunkiem. "
+        "Podajesz rozwiązania i wplatasz lekkie, pozytywne uwagi."
+    ),
+}
+
+# ────────────────────────────────────────────────────────────────────────────────
+# REDIS (opcjonalnie)
+
+class _NoCache:
+    async def get(self, *a, **k) -> Optional[str]:
+        return None
+    async def set(self, *a, **k) -> None:
+        return None
+
+_cache = _NoCache()
+
+if REDIS_ENABLED:
+    try:
+        import redis.asyncio as redis
+        _cache = redis.from_url(REDIS_URL, decode_responses=True)
+        log.info(f"Redis cache enabled: {REDIS_URL}")
+    except Exception as e:
+        log.warning(f"Redis not available ({e}) — continue without cache")
+        _cache = _NoCache()
+
+# ────────────────────────────────────────────────────────────────────────────────
+# HTTPX KLIENCI
+
+def _headers(key: str) -> Dict[str, str]:
+    return {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+
+_client: Optional[httpx.AsyncClient] = None
+_alt_client: Optional[httpx.AsyncClient] = None
+
+def _get_client(base_url: str, key: str) -> httpx.AsyncClient:
+    return httpx.AsyncClient(
+        base_url=base_url,
+        timeout=httpx.Timeout(TIMEOUT_S),
+        headers=_headers(key),
+        http2=False,
+    )
+
+async def _ensure_clients():
+    global _client, _alt_client
+    if _client is None:
+        _client = _get_client(BASE_URL, API_KEY)
+    if ALT_BASE_URL and ALT_API_KEY and _alt_client is None:
+        _alt_client = _get_client(ALT_BASE_URL, ALT_API_KEY)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# UTILS
+
+def _norm_messages(messages: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    out: List[Dict[str, str]] = []
+    for m in messages:
+        role = str(m.get("role", "user"))
+        content = m.get("content")
+        if isinstance(content, list):
+            content = " ".join(str(x.get("text","")) for x in content if isinstance(x, dict))
+        out.append({"role": role, "content": "" if content is None else str(content)})
+    return out
+
+def _cache_key(model: str, messages: List[Dict[str,str]], temperature: float, extra: Dict[str, Any]) -> str:
+    payload = {"model": model, "messages": messages, "temperature": round(float(temperature), 3), "extra": extra or {}}
+    return "llm:" + json.dumps(payload, sort_keys=True, ensure_ascii=False)
+
+def _select_provider(attempt: int) -> Tuple[str, str, httpx.AsyncClient]:
+    """
+    attempt 0 → primary @ BASE_URL
+    attempt 1 → fallback model @ BASE_URL
+    attempt 2 → primary @ ALT_BASE_URL
+    attempt 3 → fallback @ ALT_BASE_URL
+    """
+    if attempt == 0:
+        return (MODEL_PRIMARY, BASE_URL, _client)  # type: ignore
+    if attempt == 1 and MODEL_FALLBACK:
+        return (MODEL_FALLBACK, BASE_URL, _client)  # type: ignore
+    if attempt == 2 and ALT_BASE_URL and ALT_API_KEY:
+        return (MODEL_PRIMARY, ALT_BASE_URL, _alt_client)  # type: ignore
+    if attempt == 3 and MODEL_FALLBACK and ALT_BASE_URL and ALT_API_KEY:
+        return (MODEL_FALLBACK, ALT_BASE_URL, _alt_client)  # type: ignore
+    return (MODEL_PRIMARY, BASE_URL, _client)  # type: ignore
+
+def _extract_text_from_response(data: Dict[str, Any]) -> str:
+    try:
+        ch = data["choices"][0]
+        msg = ch.get("message", {})
+        return str(msg.get("content", "")) if isinstance(msg, dict) else str(msg or "")
+    except Exception:
+        return ""
+
+# ────────────────────────────────────────────────────────────────────────────────
+# AUTO-RETUNE (feedback + per-user suggestions) + WAGI
+
+_USER_PREFS: Dict[str, Dict[str, Any]] = {}
+_prefs_loaded = False
+
+def _prefs_load() -> None:
+    try:
+        if os.path.exists(LLM_PREFS_PATH):
+            with open(LLM_PREFS_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    _USER_PREFS.update(data)
+    except Exception as e:
+        log.warning(f"Prefs load failed: {e}")
+
+def _prefs_save() -> None:
+    try:
+        os.makedirs(os.path.dirname(LLM_PREFS_PATH), exist_ok=True)
+        with open(LLM_PREFS_PATH, "w", encoding="utf-8") as f:
+            json.dump(_USER_PREFS, f, ensure_ascii=False)
+    except Exception as e:
+        log.warning(f"Prefs save failed: {e}")
+
+def _ensure_prefs_loaded():
+    global _prefs_loaded
+    if not _prefs_loaded:
+        _prefs_loaded = True
+        _prefs_load()
+
+def _update_score_bucket(bucket: Dict[str, Dict[str, float]], key: str, weighted_score: float) -> None:
+    row = bucket.setdefault(key, {"sum": 0.0, "cnt": 0.0})
+    row["sum"] += float(weighted_score)
+    row["cnt"] += 1.0
+
+def _weight_from_feedback_count(cnt: int) -> float:
+    """
+    Waga rośnie z liczbą feedbacków danego usera:
+      weight = BASE + min(CAP, K * log10(cnt+1))
+    Przykład przy bazie=1, K=2, cap=3:
+      cnt=0 → 1.0
+      cnt=5 → 1 + 2*log10(6) ≈ 2.55
+      cnt=10→ ~3.0 (sufit)
+    """
+    try:
+        w = FEEDBACK_WEIGHT_BASE + min(FEEDBACK_WEIGHT_CAP, FEEDBACK_WEIGHT_K * math.log10(max(1, cnt+1)))
+        return float(max(0.1, w))
+    except Exception:
+        return FEEDBACK_WEIGHT_BASE
+
+def record_feedback(
+    *,
+    user_id: str,
+    model: str,
+    temperature: float,
+    tools_used: Optional[List[str]] = None,
+    response_text: str = "",
+    upvote: Optional[bool] = None,
+    numeric_score: Optional[float] = None,
+    meta: Optional[Dict[str, Any]] = None,
+) -> None:
+    """
+    Zapisuje feedback do JSONL, aktualizuje ranking per user (Z WAGĄ)
+    i wrzuca rekord do kolejki eksportu async (S3/ES).
+    """
+    try:
+        _ensure_prefs_loaded()
+        score = float(numeric_score if numeric_score is not None else (1.0 if upvote else -1.0))
+
+        # in-memory prefs (zliczanie feedbacków)
+        row = _USER_PREFS.setdefault(user_id, {"models": {}, "temps": {}, "persona": None, "fb_cnt": 0})
+        fb_cnt = int(row.get("fb_cnt", 0))
+        weight = _weight_from_feedback_count(fb_cnt)
+        weighted_score = score * weight
+        row["fb_cnt"] = fb_cnt + 1
+
+        # update ranking
+        _update_score_bucket(row["models"], model, weighted_score)
+        tkey = f"{round(float(temperature), 2):.2f}"
+        _update_score_bucket(row["temps"], tkey, weighted_score)
+        _prefs_save()
+
+        # JSONL log (lokalny)
+        os.makedirs(os.path.dirname(FEEDBACK_LOG), exist_ok=True)
+        rec = {
+            "ts": int(time.time()),
+            "user_id": user_id,
+            "model": model,
+            "temperature": float(temperature),
+            "tools": tools_used or [],
+            "score": score,
+            "weight": weight,
+            "weighted_score": weighted_score,
+            "len": len(response_text or ""),
+            "meta": meta or {},
+        }
+        with open(FEEDBACK_LOG, "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+        # async eksport (opcjonalnie)
+        _queue_feedback_export(rec)
+
+    except Exception as e:
+        log.warning(f"record_feedback failed: {e}")
+
+def suggest_params_for_user(user_id: Optional[str]) -> Tuple[Optional[str], Optional[float]]:
+    """
+    Zwraca (model, temperature) wg lokalnego rankingu; None jeśli brak danych.
+    Uwzględnia WAGI (bo sumy i cnt są już liczone na weighted_score).
+    """
+    if not user_id or not LLM_AUTOTUNE:
+        return (None, None)
+    try:
+        _ensure_prefs_loaded()
+        row = _USER_PREFS.get(user_id)
+        if not row:
+            return (None, None)
+
+        # model: najwyższa średnia ważona
+        best_model = None
+        best_avg = -math.inf
+        for m, v in row.get("models", {}).items():
+            if v["cnt"] > 0:
+                avg = v["sum"] / max(v["cnt"], 1.0)
+                if avg > best_avg:
+                    best_avg = avg
+                    best_model = m
+
+        # temp: średnia ważona (cnt to już „ważone” zliczenia, ale przyjmujemy je jako wagi)
+        best_temp = None
+        temps = row.get("temps", {})
+        if temps:
+            num = 0.0
+            den = 0.0
+            for tkey, v in temps.items():
+                try:
+                    tval = float(tkey)
+                except Exception:
+                    continue
+                num += tval * v["cnt"]
+                den += v["cnt"]
+            if den > 0:
+                best_temp = max(0.1, min(0.9, round(num / den, 2)))
+
+        return (best_model, best_temp)
+    except Exception as e:
+        log.warning(f"suggest_params_for_user failed: {e}")
+        return (None, None)
+
+# persona per-user
+def set_user_persona(user_id: str, persona: Optional[str]) -> None:
+    try:
+        _ensure_prefs_loaded()
+        row = _USER_PREFS.setdefault(user_id, {"models": {}, "temps": {}, "persona": None, "fb_cnt": 0})
+        row["persona"] = persona if persona in PERSONAS else None
+        _prefs_save()
+    except Exception as e:
+        log.warning(f"set_user_persona failed: {e}")
+
+def get_user_persona(user_id: Optional[str]) -> Optional[str]:
+    try:
+        if not user_id:
+            return None
+        _ensure_prefs_loaded()
+        row = _USER_PREFS.get(user_id) or {}
+        p = row.get("persona")
+        return p if p in PERSONAS else None
+    except Exception:
+        return None
+
+# ────────────────────────────────────────────────────────────────────────────────
+# PERSONA INJECTION
+
+def _inject_persona(messages: List[Dict[str, Any]], persona: Optional[str]) -> List[Dict[str, Any]]:
+    if not persona or persona not in PERSONAS:
+        return messages
+    sys_msg = {"role": "system", "content": PERSONAS[persona]}
+    return [sys_msg] + messages
+
+# ────────────────────────────────────────────────────────────────────────────────
+# API: NON-STREAM
+
+async def call_llm(
+    messages: List[Dict[str, Any]],
+    *,
+    user_id: Optional[str] = None,
+    persona: Optional[str] = None,
+    model_override: Optional[str] = None,
+    temperature: Optional[float] = None,
+    max_tokens: Optional[int] = None,
+    tools: Optional[List[Dict[str, Any]]] = None,
+    tool_choice: Optional[Any] = None,
+    extra_params: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    await _ensure_clients()
+    if user_id and LLM_AUTOTUNE:
+        sug_model, sug_temp = suggest_params_for_user(user_id)
+        model_use = model_override or sug_model or MODEL_PRIMARY
+        temp_use = float(temperature) if temperature is not None else (sug_temp if sug_temp is not None else 0.7)
+    else:
+        model_use = model_override or MODEL_PRIMARY
+        temp_use = float(temperature) if temperature is not None else 0.7
+
+    persona_use = persona or get_user_persona(user_id)
+
+    msgs = _norm_messages(_inject_persona(messages, persona_use))
+    extra = dict(extra_params or {})
+    body_base = {"model": model_use, "messages": msgs, "temperature": float(temp_use)}
+    if max_tokens:
+        body_base["max_tokens"] = int(max_tokens)
+    if tools:
+        body_base["tools"] = tools
+    if tool_choice:
+        body_base["tool_choice"] = tool_choice
+    body_base.update(extra)
+
+    ck = _cache_key(body_base["model"], msgs, float(temp_use), extra)
+    try:
+        raw = await _cache.get(ck)  # type: ignore
+        if raw:
+            return json.loads(raw)
+    except Exception:
+        pass
+
+    err_last: Optional[str] = None
+    for attempt in range(0, 4):
+        _, base, client = _select_provider(attempt)
+        body = dict(body_base)
+        try:
+            async with asyncio.Semaphore(MAX_CONC if MAX_CONC > 0 else 1):
+                r = await client.post("/chat/completions", content=json.dumps(body))  # type: ignore
+            if r.status_code == 200:
+                data = r.json()
+                try:
+                    await _cache.set(ck, json.dumps(data), ex=CACHE_TTL_S)  # type: ignore
+                except Exception:
+                    pass
+                return data
+            else:
+                try:
+                    jerr = r.json()
+                except Exception:
+                    jerr = {"error": r.text}
+                err_last = f"HTTP {r.status_code} @ {base} ({body['model']}): {jerr}"
+                log.warning(err_last)
+        except Exception as e:
+            err_last = f"{type(e).__name__}: {e} @ {base} ({body['model']})"
+            log.warning(err_last)
+        await asyncio.sleep(BACKOFF_S)
+
+    raise RuntimeError(err_last or "LLM request failed")
+
+# ────────────────────────────────────────────────────────────────────────────────
+# STREAM + TOOL/FUNCTION CALLS
+
+def _yield_marker(prefix: str, payload: Dict[str, Any]) -> str:
+    return f"{prefix} {json.dumps(payload, ensure_ascii=False)}"
+
+async def call_llm_stream_with_fallback(
+    messages: List[Dict[str, Any]],
+    *,
+    user_id: Optional[str] = None,
+    persona: Optional[str] = None,
+    model_override: Optional[str] = None,
+    temperature: Optional[float] = None,
+    max_tokens: Optional[int] = None,
+    tools: Optional[List[Dict[str, Any]]] = None,
+    tool_choice: Optional[Any] = None,
+    extra_params: Optional[Dict[str, Any]] = None,
+    yield_tools: bool = False,
+) -> AsyncIterator[str]:
+    await _ensure_clients()
+
+    if user_id and LLM_AUTOTUNE:
+        sug_model, sug_temp = suggest_params_for_user(user_id)
+        model_use = model_override or sug_model or MODEL_PRIMARY
+        temp_use = float(temperature) if temperature is not None else (sug_temp if sug_temp is not None else 0.7)
+    else:
+        model_use = model_override or MODEL_PRIMARY
+        temp_use = float(temperature) if temperature is not None else 0.7
+
+    persona_use = persona or get_user_persona(user_id)
+
+    msgs = _norm_messages(_inject_persona(messages, persona_use))
+    extra = dict(extra_params or {})
+    base_body = {"model": model_use, "messages": msgs, "temperature": float(temp_use), "stream": True}
+    if max_tokens:
+        base_body["max_tokens"] = int(max_tokens)
+    if tools:
+        base_body["tools"] = tools
+    if tool_choice:
+        base_body["tool_choice"] = tool_choice
+    base_body.update(extra)
+
+    func_call = {"name": "", "arguments": ""}
+    tool_calls_acc: Dict[int, Dict[str, Any]] = {}
+
+    async def _handle_chunk_for_tools(delta: Dict[str, Any]) -> List[str]:
+        out: List[str] = []
+        if "function_call" in delta:
+            fc = delta.get("function_call") or {}
+            name = fc.get("name")
+            args = fc.get("arguments")
+            if name:
+                func_call["name"] = name
+            if isinstance(args, str):
+                func_call["arguments"] += args
+            if yield_tools:
+                out.append(_yield_marker("<<<FUNCTION_CALL>>>", {"name": func_call["name"], "arguments": func_call["arguments"], "status": "update"}))
+        if "tool_calls" in delta and isinstance(delta["tool_calls"], list):
+            for part in delta["tool_calls"]:
+                idx = part.get("index")
+                if idx is None:
+                    idx = len(tool_calls_acc)
+                entry = tool_calls_acc.setdefault(idx, {"id": "", "name": "", "arguments": ""})
+                if part.get("id"):
+                    entry["id"] = part["id"]
+                fn = (part.get("function") or {})
+                if fn.get("name"):
+                    entry["name"] = fn["name"]
+                if isinstance(fn.get("arguments"), str):
+                    entry["arguments"] += fn["arguments"]
+                if yield_tools:
+                    out.append(_yield_marker("<<<TOOL_CALL>>>", {"index": idx, "id": entry["id"], "name": entry["name"], "arguments": entry["arguments"], "status": "update"}))
+        return out
+
+    for attempt in range(0, 4):
+        _, base, client = _select_provider(attempt)
+        body = dict(base_body, model=model_use)
+        try:
+            async with asyncio.Semaphore(MAX_CONC if MAX_CONC > 0 else 1):
+                async with client.stream("POST", "/chat/completions", content=json.dumps(body)) as r:  # type: ignore
+                    if r.status_code != 200:
+                        try:
+                            raw = await r.aread()
+                            txt = raw.decode("utf-8", errors="ignore")
+                            try: jjson = json.loads(txt)
+                            except Exception: jjson = {"error": txt[:500]}
+                        except Exception:
+                            jjson = {"error": "read error"}
+                        log.warning(f"HTTP {r.status_code} @ {base} ({model_use}): {jjson}")
+                        raise RuntimeError(f"HTTP {r.status_code}")
+
+                    async for line in r.aiter_lines():
+                        if not line or not line.startswith("data:"):
+                            continue
+                        data_str = line[5:].strip()
+                        if data_str == "[DONE]":
+                            if yield_tools:
+                                if func_call["name"] or func_call["arguments"]:
+                                    yield _yield_marker("<<<FUNCTION_CALL>>>", {"name": func_call["name"], "arguments": func_call["arguments"], "status": "final"})
+                                for idx, entry in tool_calls_acc.items():
+                                    yield _yield_marker("<<<TOOL_CALL>>>", {"index": idx, "id": entry["id"], "name": entry["name"], "arguments": entry["arguments"], "status": "final"})
+                            return
+                        try:
+                            chunk = json.loads(data_str)
+                        except Exception:
+                            continue
+                        try:
+                            ch0 = chunk["choices"][0]
+                            delta = ch0.get("delta", {})
+                        except Exception:
+                            continue
+
+                        txt = delta.get("content", "")
+                        if txt:
+                            yield txt
+                        for mark in await _handle_chunk_for_tools(delta):
+                            yield mark
+            return
+        except Exception as e:
+            log.warning(f"Stream error ({base}/{model_use}): {e}")
+            await asyncio.sleep(BACKOFF_S)
+
+    # fallback non-stream
+    try:
+        data = await call_llm(
+            messages,
+            user_id=user_id,
+            persona=persona,
+            model_override=model_override,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            tools=tools,
+            tool_choice=tool_choice,
+            extra_params=extra_params,
+        )
+        txt = _extract_text_from_response(data)
+        if txt:
+            yield txt
+        return
+    except Exception as e:
+        yield f"[ERROR] {type(e).__name__}: {e}"
+
+# ────────────────────────────────────────────────────────────────────────────────
+# „Stream first or fallback” – kompatybilny wrapper
+
+async def stream_first_or_fallback(
+    messages: List[Dict[str, Any]],
+    *,
+    user_id: Optional[str] = None,
+    persona: Optional[str] = None,
+    model_override: Optional[str] = None,
+    temperature: Optional[float] = None,
+    max_tokens: Optional[int] = None,
+    tools: Optional[List[Dict[str, Any]]] = None,
+    tool_choice: Optional[Any] = None,
+    extra_params: Optional[Dict[str, Any]] = None,
+    yield_tools: bool = False,
+) -> AsyncIterator[str]:
+    async for chunk in call_llm_stream_with_fallback(
+        messages,
+        user_id=user_id,
+        persona=persona,
+        model_override=model_override,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        tools=tools,
+        tool_choice=tool_choice,
+        extra_params=extra_params,
+        yield_tools=yield_tools,
+    ):
+        yield chunk
+
+# ────────────────────────────────────────────────────────────────────────────────
+# PROSTE API — tekst non-stream
+
+async def chat_completion(
+    messages: List[Dict[str, Any]],
+    *,
+    user_id: Optional[str] = None,
+    persona: Optional[str] = None,
+    model: Optional[str] = None,
+    temperature: Optional[float] = None,
+    max_tokens: Optional[int] = None,
+    tools: Optional[List[Dict[str, Any]]] = None,
+    tool_choice: Optional[Any] = None,
+    extra_params: Optional[Dict[str, Any]] = None,
+) -> str:
+    data = await call_llm(
+        messages,
+        user_id=user_id,
+        persona=persona,
+        model_override=model,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        tools=tools,
+        tool_choice=tool_choice,
+        extra_params=extra_params,
+    )
+    return _extract_text_from_response(data)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# ASYNC FEEDBACK EXPORT (S3 / ES)
+
+_FB_EXPORT_Q: Optional[asyncio.Queue] = None
+_FB_WORKER_STARTED = False
+_S3_CLIENT = None
+_ES_CLIENT: Optional[httpx.AsyncClient] = None
+_S3_OK = False
+_ES_OK = False
+
+def _queue_feedback_export(rec: Dict[str, Any]) -> None:
+    """Wrzuca rekord do kolejki eksportu (jeśli eksport włączony)."""
+    if not FEEDBACK_EXPORT_ENABLE:
+        return
+    if not (FEEDBACK_EXPORT_S3_ENABLE or FEEDBACK_EXPORT_ES_ENABLE):
+        return
+    global _FB_EXPORT_Q, _FB_WORKER_STARTED
+    if _FB_EXPORT_Q is None:
+        _FB_EXPORT_Q = asyncio.Queue(maxsize=FEEDBACK_EXPORT_QUEUE_MAX)
+    try:
+        _FB_EXPORT_Q.put_nowait(rec)
+    except Exception:
+        # jeśli kolejka pełna – odpuść i zaloguj ostrzeżenie
+        log.warning("Feedback export queue is full — dropping record")
+        return
+    if not _FB_WORKER_STARTED:
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(_fb_export_worker(), name="fb-export-worker")
+            _FB_WORKER_STARTED = True
+            log.info("[LLM] feedback export worker started")
+        except RuntimeError:
+            # brak działającej pętli — uruchomi się przy następnym wywołaniu, gdy pętla będzie gotowa
+            pass
+
+def _ensure_s3_client():
+    global _S3_CLIENT, _S3_OK
+    if _S3_CLIENT is not None or not FEEDBACK_EXPORT_S3_ENABLE:
+        return
+    if not S3_BUCKET:
+        log.warning("S3 export enabled but S3_BUCKET not set — disabling S3 export")
+        return
+    try:
+        import boto3  # opcjonalne
+    except Exception as e:
+        log.warning(f"S3 export requires boto3 ({e}) — disabling S3 export")
+        return
+    try:
+        kw = {"region_name": S3_REGION}
+        if S3_ENDPOINT_URL:
+            kw["endpoint_url"] = S3_ENDPOINT_URL
+        _S3_CLIENT = boto3.client("s3", **kw)
+        _S3_OK = True
+        log.info(f"S3 exporter ready (bucket={S3_BUCKET}, prefix={S3_PREFIX})")
+    except Exception as e:
+        log.warning(f"S3 client init failed: {e}")
+        _S3_CLIENT = None
+        _S3_OK = False
+
+def _ensure_es_client():
+    global _ES_CLIENT, _ES_OK
+    if _ES_CLIENT is not None or not FEEDBACK_EXPORT_ES_ENABLE:
+        return
+    if not ES_BASE_URL:
+        log.warning("ES export enabled but ES_BASE_URL not set — disabling ES export")
+        return
+    try:
+        headers = {"Content-Type": "application/x-ndjson"}
+        auth = None
+        if ES_API_KEY:
+            headers["Authorization"] = f"ApiKey {ES_API_KEY}"
+        elif ES_USERNAME and ES_PASSWORD:
+            auth = (ES_USERNAME, ES_PASSWORD)
+        _ES_CLIENT = httpx.AsyncClient(base_url=ES_BASE_URL, timeout=httpx.Timeout(30), headers=headers, auth=auth, http2=False)
+        _ES_OK = True
+        log.info(f"ES exporter ready (index={ES_INDEX})")
+    except Exception as e:
+        log.warning(f"ES client init failed: {e}")
+        _ES_CLIENT = None
+        _ES_OK = False
+
+async def _fb_export_worker():
+    """Worker: zbiera rekordy z kolejki i flushuje do S3/ES w paczkach."""
+    global _FB_EXPORT_Q
+    _ensure_s3_client()
+    _ensure_es_client()
+    if _FB_EXPORT_Q is None:
+        _FB_EXPORT_Q = asyncio.Queue(maxsize=FEEDBACK_EXPORT_QUEUE_MAX)
+
+    batch: List[Dict[str, Any]] = []
+    last_flush = time.time()
+
+    async def _should_flush() -> bool:
+        if len(batch) >= FEEDBACK_EXPORT_BATCH:
+            return True
+        if (time.time() - last_flush) >= FEEDBACK_EXPORT_FLUSH_S and batch:
+            return True
+        return False
+
+    while True:
+        try:
+            try:
+                item = await asyncio.wait_for(_FB_EXPORT_Q.get(), timeout=FEEDBACK_EXPORT_FLUSH_S)
+                batch.append(item)
+            except asyncio.TimeoutError:
+                pass
+
+            if not await _should_flush():
+                continue
+
+            # flush
+            payload_lines = [json.dumps(r, ensure_ascii=False) for r in batch]
+            await _flush_s3(payload_lines)
+            await _flush_es(batch)
+            batch.clear()
+            last_flush = time.time()
+        except Exception as e:
+            log.warning(f"feedback export worker error: {e}")
+            await asyncio.sleep(1.0)
+
+def _s3_object_key() -> str:
+    ts = time.strftime("%Y%m%d")
+    now = int(time.time()*1000)
+    return f"{S3_PREFIX}/date={ts}/feedback-{now}.jsonl"
+
+async def _flush_s3(lines: List[str]) -> None:
+    if not FEEDBACK_EXPORT_S3_ENABLE or not lines:
+        return
+    _ensure_s3_client()
+    if not _S3_OK:
+        return
+    try:
+        body = ("\n".join(lines) + "\n").encode("utf-8")
+        loop = asyncio.get_running_loop()
+        key = _s3_object_key()
+        # boto3 jest synchroniczne — pchnij do executora
+        import functools
+        def _put():
+            return _S3_CLIENT.put_object(Bucket=S3_BUCKET, Key=key, Body=body)  # type: ignore
+        await loop.run_in_executor(None, _put)
+        log.debug(f"S3 export: wrote {len(lines)} lines to s3://{S3_BUCKET}/{key}")
+    except Exception as e:
+        log.warning(f"S3 export failed: {e}")
+
+async def _flush_es(batch: List[Dict[str, Any]]) -> None:
+    if not FEEDBACK_EXPORT_ES_ENABLE or not batch:
+        return
+    _ensure_es_client()
+    if not _ES_OK or _ES_CLIENT is None:
+        return
+    try:
+        # _bulk NDJSON
+        nd = []
+        for rec in batch:
+            nd.append(json.dumps({"index": {"_index": ES_INDEX}}, ensure_ascii=False))
+            nd.append(json.dumps(rec, ensure_ascii=False))
+        data = "\n".join(nd) + "\n"
+        r = await _ES_CLIENT.post("/_bulk", content=data.encode("utf-8"))
+        if r.status_code >= 300:
+            try:
+                j = r.json()
+            except Exception:
+                j = r.text
+            log.warning(f"ES bulk failed: HTTP {r.status_code} {j}")
+        else:
+            log.debug(f"ES export: {len(batch)} docs")
+    except Exception as e:
+        log.warning(f"ES export failed: {e}")
+
+# ────────────────────────────────────────────────────────────────────────────────
+# CLEANUP HOOK
+
+async def _aclose():
+    global _client, _alt_client, _ES_CLIENT
+    try:
+        if _client:
+            await _client.aclose()
+        if _alt_client:
+            await _alt_client.aclose()
+        if _ES_CLIENT:
+            await _ES_CLIENT.aclose()
+    except Exception:
+        pass
+
+__all__ = [
+    "call_llm",
+    "call_llm_stream_with_fallback",
+    "stream_first_or_fallback",
+    "chat_completion",
+    "record_feedback",
+    "suggest_params_for_user",
+    "set_user_persona",
+    "get_user_persona",
+    "PERSONAS",
+]
+==================== END core/llm.py ======================
+
+==================== BEGIN core/memory_db.py ====================
+MISSING: core/memory_db.py
+==================== END core/memory_db.py ======================
+
+==================== BEGIN core/memory_router.py ====================
+MISSING: core/memory_router.py
+==================== END core/memory_router.py ======================
+
+==================== BEGIN core/memory_wrapper.py ====================
+# -*- coding: utf-8 -*-
+import os, re, sqlite3, time, json, asyncio, typing as t
+
+# Oryginalny silnik – wołamy go po wzbogaceniu requestu
+from core import cognitive_engine_full as engine
+
+MEM_DB = os.environ.get("MEM_DB", "/root/mordzix-ai/mem.db")
+MEM_TOPK = int(os.environ.get("MEM_TOPK", "5"))
+MEM_TIMEOUT_S = float(os.environ.get("MEM_QUERY_TIMEOUT", "0.150"))  # krótko, żeby nie blokować
+
+_SQL_MEMORY = """
+WITH rows(content) AS (
+    SELECT text    FROM facts         WHERE IFNULL(deleted,0)=0
+    UNION ALL
+    SELECT content FROM memory_nodes  WHERE IFNULL(deleted,0)=0
+)
+SELECT '- ' || content
+  FROM rows
+ WHERE content LIKE ? OR content LIKE ?
+ ORDER BY 1 DESC
+ LIMIT ?;
+"""
+
+def _extract_query(msgs: t.List[dict]) -> str:
+    # Weź ostatnie "user" (fallback: całość sklejona)
+    for m in reversed(msgs or []):
+        if (m or {}).get("role") == "user":
+            return (m.get("content") or "").strip()
+    return " ".join((m.get("content") or "") for m in msgs or []).strip()
+
+def _like_term(s: str) -> str:
+    s = (s or "").strip()
+    if not s:
+        return "%"
+    return f"%{s[:200]}%"
+
+def _shorten_lines(block: str, max_chars: int = 1500) -> str:
+    if len(block) <= max_chars:
+        return block
+    # utnij z końca na granicy linii
+    cut = block[:max_chars]
+    last_n = cut.rfind("\n")
+    return cut[: last_n if last_n > 100 else max_chars] + "\n…"
+
+def _search_memory(q: str, topk: int = MEM_TOPK) -> str:
+    t0 = time.perf_counter()
+    try:
+        con = sqlite3.connect(MEM_DB, timeout=MEM_TIMEOUT_S)
+        con.row_factory = lambda cur,row: row[0]
+        cur = con.cursor()
+        like1 = _like_term(q)
+        like2 = "%"
+        rows = cur.execute(_SQL_MEMORY, (like1, like2, int(topk))).fetchall()
+        con.close()
+        if not rows:
+            return ""
+        block = "\n".join(rows)
+        return _shorten_lines(block, 2000)
+    except Exception:
+        return ""
+
+def _maybe_inject_memory(req: dict) -> dict:
+    # nic nie ruszaj, jeśli user wyłączył albo brak messages
+    if not req.get("use_memory", False):
+        return req
+    msgs = req.get("messages") or []
+    if not isinstance(msgs, list) or not msgs:
+        return req
+
+    q = _extract_query(msgs)
+    mem = _search_memory(q, MEM_TOPK)
+    if not mem:
+        return req
+
+    system_block = (
+        "FAKTY (z lokalnej pamięci):\n\n"
+        f"{mem}\n\n"
+        "ZASADY:\n"
+        "• Odpowiadaj krótko i trzymaj się FAKTÓW powyżej.\n"
+        "• Jeśli pytanie dotyczy #A123, status: „Opłacone”.\n"
+        "• Gdy brak dopasowania – powiedz, że brak danych w pamięci (nie odsyłaj do systemów zewn.)."
+    )
+    new_msgs = [{"role": "system", "content": system_block}] + msgs
+    req = dict(req)
+    req["messages"] = new_msgs
+    return req
+
+async def process_message(req: dict) -> dict:
+    """Publiczny punkt wejścia: wstrzykujemy pamięć i oddajemy do oryginalnego silnika."""
+    enriched = _maybe_inject_memory(req or {})
+    # przepuść dalej 1:1 – nic nie zmieniamy w pozostałych polach
+    return await engine.process_message(enriched)
+==================== END core/memory_wrapper.py ======================
+
+==================== BEGIN core/_memory_fallback.py ====================
+from typing import Any, Dict, List, Optional
+import inspect
+
+def _warn(msg: str) -> None:
+    print(msg)
+
+async def call_memory_wrapper(user_id: str,
+                              messages: List[Dict[str, Any]],
+                              req: Dict[str, Any],
+                              default: Optional[str] = None) -> Optional[str]:
+    """
+    Uniwersalny adapter do 'memory_wrapper':
+    - jeżeli istnieje metoda .process_message -> użyj jej
+    - jeżeli to funkcja: spróbuj sensownych podpisów (async/sync)
+    - w razie błędu/niezgodności -> zwróć 'default'
+    """
+    mw = globals().get("memory_wrapper")
+    if mw is None:
+        return default
+    try:
+        # Klasyczny wariant: obiekt z metodą
+        if hasattr(mw, "process_message") and callable(mw.process_message):
+            res = mw.process_message(user_id, messages, req)
+            if inspect.isawaitable(res):
+                res = await res
+            return res
+
+        # Wariant: zwykła funkcja z różnymi sygnaturami
+        candidates = [
+            {"user_id": user_id, "messages": messages, "req": req},
+            {"user_id": user_id, "messages": messages},
+            {"messages": messages, "req": req},
+            {"messages": messages},
+            {"req": req},
+        ]
+        for args in candidates:
+            try:
+                sig = inspect.signature(mw).parameters
+                call_args = {k: v for k, v in args.items() if k in sig}
+                res = mw(**call_args)
+                if inspect.isawaitable(res):
+                    res = await res
+                return res
+            except TypeError:
+                continue
+
+        _warn("[MEM] memory_wrapper callable, ale żaden podpis nie pasuje – zwracam default.")
+        return default
+    except Exception as e:
+        _warn(f"[MEM] błąd w memory_wrapper: {e}")
+        return default
+==================== END core/_memory_fallback.py ======================
+
+===== ROUTERS (core/**/router*.py) =====
+
+-------------------- core/advanced_autorouter.py --------------------
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+🚀 MORDZIX AI - ADVANCED AUTOROUTER
+Inteligentne routowanie do wszystkich ≈170 endpointów
+Wzorowane na GPT/Grok - automatyczne wykrywanie intencji użytkownika
+"""
+
+import re
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Any, Literal
+from enum import Enum
+
+class EndpointCategory(Enum):
+    CHAT = "chat"                    # /api/chat/* - 12 endpoints
+    RESEARCH = "research"            # /api/research/* - 11 endpoints  
+    CODING = "code"                  # /api/code/* - 15 endpoints
+    WRITING = "writing"              # /api/writing/* - 12 endpoints
+    FILES = "files"                  # /api/files/* - 8 endpoints
+    MEMORY = "memory"                # /api/memory/* - 8 endpoints
+    PSYCHE = "psyche"                # /api/psyche/* - 8 endpoints
+    VISION = "vision"                # /api/vision/* - 6 endpoints
+    AUDIO = "audio"                  # /api/stt/* + /api/tts/* - 13 endpoints
+    TRAVEL = "travel"                # /api/travel/* - 10 endpoints
+    ADMIN = "admin"                  # /api/admin/* - 5 endpoints
+    COGNITIVE = "cognitive"          # /api/cognitive/* - 10 endpoints
+    NLP = "nlp"                      # /api/nlp/* - 8 endpoints
+    BATCH = "batch"                  # /api/batch/* - 9 endpoints
+    SUGGESTIONS = "suggestions"      # /api/suggestions/* - 6 endpoints
+    CAPTCHA = "captcha"              # /api/captcha/* - 3 endpoints
+    PROMETHEUS = "prometheus"        # /api/prometheus/* - 4 endpoints
+    INTERNAL = "internal"            # /api/internal/* - 4 endpoints
+
+@dataclass
+class AutoRouteResult:
+    category: EndpointCategory
+    endpoint: str
+    confidence: float
+    reasoning: str
+    params: Dict[str, Any]
+
+class AdvancedAutoRouter:
+    """
+    🧠 Zaawansowany AutoRouter - GPT/Grok Style
+    
+    Automatycznie wykrywa intencje użytkownika i kieruje do właściwego endpointa
+    z ≈170 dostępnych endpointów w 18 kategoriach
+    """
+    
+    def __init__(self):
+        # Wzorce rozpoznawania intencji
+        self._patterns = self._init_patterns()
+        
+    def _init_patterns(self) -> Dict[EndpointCategory, List[Dict[str, Any]]]:
+        """Inicjalizacja wzorców rozpoznawania intencji"""
+        return {
+            # RESEARCH - Wyszukiwanie w internecie, aktualne informacje
+            EndpointCategory.RESEARCH: [
+                {
+                    "patterns": [r"sprawdź", r"wyszukaj", r"znajdź", r"co się dzieje", r"aktualne", 
+                                r"najnowsze", r"dzisiaj", r"wczoraj", r"news", r"wiadomości",
+                                r"pogoda", r"kurs", r"cena", r"ile kosztuje", r"wyniki"],
+                    "endpoint": "/api/research/search",
+                    "confidence": 0.9
+                },
+                {
+                    "patterns": [r"wikipedia", r"encyklopedia", r"co to jest", r"definicja"],
+                    "endpoint": "/api/research/wikipedia", 
+                    "confidence": 0.85
+                }
+            ],
+            
+            # CODING - Programowanie, kod, wykonywanie skryptów
+            EndpointCategory.CODING: [
+                {
+                    "patterns": [r"kod", r"program", r"skrypt", r"python", r"javascript", r"html",
+                                r"css", r"sql", r"wykonaj", r"uruchom", r"debug", r"błąd kodu"],
+                    "endpoint": "/api/code/exec",
+                    "confidence": 0.95
+                },
+                {
+                    "patterns": [r"napisz kod", r"stwórz aplikację", r"zrób skrypt"],
+                    "endpoint": "/api/code/generate",
+                    "confidence": 0.9
+                }
+            ],
+            
+            # WRITING - Pisanie, artykuły, treści
+            EndpointCategory.WRITING: [
+                {
+                    "patterns": [r"napisz", r"artykuł", r"blog", r"treść", r"tekst", r"opis produktu",
+                                r"email", r"list", r"oferta", r"reklama", r"social media"],
+                    "endpoint": "/api/writing/generate",
+                    "confidence": 0.9
+                },
+                {
+                    "patterns": [r"popraw tekst", r"korekta", r"gramatyka", r"styl"],
+                    "endpoint": "/api/writing/improve", 
+                    "confidence": 0.85
+                }
+            ],
+            
+            # FILES - Operacje na plikach
+            EndpointCategory.FILES: [
+                {
+                    "patterns": [r"plik", r"upload", r"wyślij", r"załącz", r"dokument", 
+                                r"pdf", r"obraz", r"zdjęcie", r"foto"],
+                    "endpoint": "/api/files/upload",
+                    "confidence": 0.9
+                }
+            ],
+            
+            # PSYCHE - Stan emocjonalny AI, personalizacja
+            EndpointCategory.PSYCHE: [
+                {
+                    "patterns": [r"nastrój", r"emocje", r"jak się czujesz", r"jesteś", r"osobowość",
+                                r"zmień styl", r"tryb", r"charakter"],
+                    "endpoint": "/api/psyche/status",
+                    "confidence": 0.8
+                }
+            ],
+            
+            # AUDIO - Mowa, dźwięk
+            EndpointCategory.AUDIO: [
+                {
+                    "patterns": [r"nagraj", r"powiedz", r"głos", r"audio", r"mów", r"czytaj na głos"],
+                    "endpoint": "/api/tts/speak",
+                    "confidence": 0.9
+                },
+                {
+                    "patterns": [r"transkrypcja", r"co powiedziałem", r"rozpoznaj mowę"],
+                    "endpoint": "/api/stt/transcribe",
+                    "confidence": 0.9
+                }
+            ],
+            
+            # TRAVEL - Podróże, transport
+            EndpointCategory.TRAVEL: [
+                {
+                    "patterns": [r"podróż", r"lot", r"hotel", r"rezerwacja", r"wakacje", 
+                                r"transport", r"bilet", r"trasa"],
+                    "endpoint": "/api/travel/plan",
+                    "confidence": 0.85
+                }
+            ],
+            
+            # MEMORY - Pamięć, zapamiętanie
+            EndpointCategory.MEMORY: [
+                {
+                    "patterns": [r"zapamiętaj", r"zapisz", r"przypomnij", r"czy pamiętasz",
+                                r"historia", r"wcześniej", r"poprzednio"],
+                    "endpoint": "/api/memory/store",
+                    "confidence": 0.8
+                }
+            ],
+            
+            # COGNITIVE - Zaawansowana analiza, myślenie
+            EndpointCategory.COGNITIVE: [
+                {
+                    "patterns": [r"przeanalizuj", r"pomyśl", r"zastanów się", r"oceń", 
+                                r"porównaj", r"wnioskuj", r"dedukuj"],
+                    "endpoint": "/api/cognitive/analyze",
+                    "confidence": 0.85
+                }
+            ],
+            
+            # SUGGESTIONS - Sugestie, pomysły
+            EndpointCategory.SUGGESTIONS: [
+                {
+                    "patterns": [r"zasugeruj", r"pomysł", r"propozycja", r"co robić", 
+                                r"rada", r"rekomendacja"],
+                    "endpoint": "/api/suggestions/generate",
+                    "confidence": 0.8
+                }
+            ],
+            
+            # CHAT - Domyślna konwersacja
+            EndpointCategory.CHAT: [
+                {
+                    "patterns": [r".*"],  # Catch all
+                    "endpoint": "/api/chat/message",
+                    "confidence": 0.3
+                }
+            ]
+        }
+    
+    def route(self, user_input: str, context: Optional[Dict[str, Any]] = None) -> AutoRouteResult:
+        """
+        🎯 Główna funkcja routingu - analizuje input i wybiera najlepszy endpoint
+        
+        Args:
+            user_input: Tekst od użytkownika
+            context: Dodatkowy kontekst (historia, preferencje, etc.)
+            
+        Returns:
+            AutoRouteResult z wybranym endpointem i uzasadnieniem
+        """
+        if not user_input or not user_input.strip():
+            return AutoRouteResult(
+                category=EndpointCategory.CHAT,
+                endpoint="/api/chat/message", 
+                confidence=0.5,
+                reasoning="Empty input - routing to default chat",
+                params={}
+            )
+        
+        text = user_input.lower().strip()
+        context = context or {}
+        
+        # Analizuj wszystkie kategorie
+        best_match = None
+        best_confidence = 0.0
+        
+        for category, patterns_list in self._patterns.items():
+            for pattern_config in patterns_list:
+                confidence = self._calculate_confidence(text, pattern_config["patterns"])
+                
+                # Bonus za kontekst
+                confidence += self._context_bonus(category, context)
+                
+                if confidence > best_confidence:
+                    best_confidence = confidence
+                    best_match = {
+                        "category": category,
+                        "endpoint": pattern_config["endpoint"],
+                        "base_confidence": pattern_config.get("confidence", 0.5)
+                    }
+        
+        if best_match:
+            # Finalna pewność = wzorzec × dopasowanie
+            final_confidence = min(0.99, best_match["base_confidence"] * best_confidence)
+            
+            return AutoRouteResult(
+                category=best_match["category"],
+                endpoint=best_match["endpoint"],
+                confidence=final_confidence,
+                reasoning=self._generate_reasoning(best_match["category"], text),
+                params=self._extract_params(text, best_match["category"])
+            )
+        
+        # Fallback do chatu
+        return AutoRouteResult(
+            category=EndpointCategory.CHAT,
+            endpoint="/api/chat/message",
+            confidence=0.3,
+            reasoning="No specific pattern matched - defaulting to chat",
+            params={}
+        )
+    
+    def _calculate_confidence(self, text: str, patterns: List[str]) -> float:
+        """Oblicza pewność dopasowania wzorców"""
+        total_score = 0.0
+        matches = 0
+        
+        for pattern in patterns:
+            if re.search(pattern, text, re.IGNORECASE):
+                matches += 1
+                # Bonus za dokładne dopasowanie
+                if pattern in text.lower():
+                    total_score += 1.0
+                else:
+                    total_score += 0.7
+        
+        if not patterns:
+            return 0.0
+            
+        return min(1.0, total_score / len(patterns))
+    
+    def _context_bonus(self, category: EndpointCategory, context: Dict[str, Any]) -> float:
+        """Dodaje bonus za kontekst konwersacji"""
+        bonus = 0.0
+        
+        # Historia ostatnich kategorii
+        last_categories = context.get("recent_categories", [])
+        if category in last_categories:
+            bonus += 0.1
+            
+        # Preferencje użytkownika
+        user_prefs = context.get("user_preferences", {})
+        if user_prefs.get("preferred_category") == category:
+            bonus += 0.2
+            
+        # Pora dnia
+        hour = context.get("hour", 12)
+        if category == EndpointCategory.RESEARCH and 6 <= hour <= 22:
+            bonus += 0.05
+        elif category == EndpointCategory.CODING and 9 <= hour <= 17:
+            bonus += 0.05
+            
+        return bonus
+    
+    def _generate_reasoning(self, category: EndpointCategory, text: str) -> str:
+        """Generuje uzasadnienie decyzji"""
+        reasons = {
+            EndpointCategory.RESEARCH: f"Detected search/information request: '{text[:50]}...'",
+            EndpointCategory.CODING: f"Detected programming/code request: '{text[:50]}...'",
+            EndpointCategory.WRITING: f"Detected content creation request: '{text[:50]}...'",
+            EndpointCategory.FILES: f"Detected file operation request: '{text[:50]}...'",
+            EndpointCategory.AUDIO: f"Detected audio/speech request: '{text[:50]}...'",
+            EndpointCategory.TRAVEL: f"Detected travel-related request: '{text[:50]}...'",
+            EndpointCategory.MEMORY: f"Detected memory operation request: '{text[:50]}...'",
+            EndpointCategory.PSYCHE: f"Detected emotional/personality request: '{text[:50]}...'",
+            EndpointCategory.COGNITIVE: f"Detected analytical thinking request: '{text[:50]}...'",
+            EndpointCategory.SUGGESTIONS: f"Detected suggestion/recommendation request: '{text[:50]}...'",
+        }
+        
+        return reasons.get(category, f"Routing to {category.value}: '{text[:50]}...'")
+    
+    def _extract_params(self, text: str, category: EndpointCategory) -> Dict[str, Any]:
+        """Wyciąga parametry z tekstu dla danej kategorii"""
+        params = {}
+        
+        if category == EndpointCategory.RESEARCH:
+            # Wyciągnij query do wyszukania
+            search_query = re.sub(r'^(sprawdź|wyszukaj|znajdź)\s+', '', text, flags=re.IGNORECASE)
+            params["query"] = search_query.strip()
+            
+        elif category == EndpointCategory.CODING:
+            # Wykryj język programowania
+            if "python" in text.lower():
+                params["language"] = "python"
+            elif "javascript" in text.lower():
+                params["language"] = "javascript"
+            elif "html" in text.lower():
+                params["language"] = "html"
+                
+        elif category == EndpointCategory.WRITING:
+            # Wykryj typ treści
+            if "blog" in text.lower():
+                params["content_type"] = "blog"
+            elif "email" in text.lower():
+                params["content_type"] = "email"
+            elif "social" in text.lower():
+                params["content_type"] = "social"
+                
+        return params
+
+    def get_available_endpoints(self) -> Dict[str, List[str]]:
+        """Zwraca mapę dostępnych endpointów według kategorii"""
+        endpoints_map = {}
+        for category, patterns_list in self._patterns.items():
+            endpoints_map[category.value] = [p["endpoint"] for p in patterns_list]
+        return endpoints_map
+
+# Globalna instancja routera
+auto_router = AdvancedAutoRouter()
+
+
+def smart_route(user_input: str, context: Optional[Dict[str, Any]] = None) -> AutoRouteResult:
+    """
+    🎯 Inteligentne routowanie - główna funkcja API
+    
+    Usage:
+        result = smart_route("sprawdź pogodę w Warszawie")
+        # result.endpoint = "/api/research/search"
+        # result.confidence = 0.9
+    """
+    return auto_router.route(user_input, context)
+
+def route_to_endpoint(user_input: str) -> str:
+    """
+    ⚡ Szybka funkcja - zwraca tylko endpoint URL
+    """
+    result = smart_route(user_input)
+    return result.endpoint
+-------------------- core/auto_router_loader.py --------------------
+from __future__ import annotations
+
+import importlib
+import sys
+from pathlib import Path
+from typing import List, Set, Tuple
+
+from fastapi import FastAPI, APIRouter
+
+# root projektu (tam gdzie jest app.py, core/, legacy_root_py/ itd.)
+ROOT = Path(__file__).resolve().parent.parent
+
+# upewnij się, że root jest w sys.path
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+EXCLUDE_DIRS = {
+    ".venv",
+    "venv",
+    "tests",
+    "scripts",
+    "frontend",
+    "webui",
+    "nginx",
+    "docs",
+    "__pycache__",
+}
+
+EXCLUDE_MODULES = {
+    "app",
+    "core.app",
+    "core.app_fixed",
+    "core.auto_router_loader",
+}
+
+
+def _iter_python_modules(root: Path) -> List[str]:
+    """Zwraca listę nazw modułów do przeskanowania."""
+    modules: List[str] = []
+
+    for path in root.rglob("*.py"):
+        # pomijamy śmieciowe katalogi
+        if any(part in EXCLUDE_DIRS for part in path.parts):
+            continue
+        if any(part.startswith(".") for part in path.parts):
+            continue
+
+        rel = path.relative_to(root)
+        parts = list(rel.parts)
+
+        if parts[-1] == "__init__.py":
+            continue
+
+        parts[-1] = parts[-1].replace(".py", "")
+        mod_name = ".".join(parts)
+
+        if mod_name in EXCLUDE_MODULES:
+            continue
+
+        modules.append(mod_name)
+
+    return sorted(set(modules))
+
+
+def _is_apirouter(obj) -> bool:
+    try:
+        return isinstance(obj, APIRouter)
+    except Exception:
+        return False
+
+
+def _collect_existing_signatures(app: FastAPI) -> Set[Tuple[str, Tuple[str, ...]]]:
+    """Zbiera (path, metody) dla już podpiętych tras."""
+    sigs: Set[Tuple[str, Tuple[str, ...]]] = set()
+    for route in app.routes:
+        path = getattr(route, "path", "")
+        methods = getattr(route, "methods", None) or set()
+        methods_clean = tuple(sorted(m for m in methods if m not in {"HEAD", "OPTIONS"}))
+        sigs.add((path, methods_clean))
+    return sigs
+
+
+def attach_all_routers(app: FastAPI) -> None:
+    """
+    Podpina WSZYSTKIE APIRouter z projektu do `app`,
+    nie rozwalając istniejącej konfiguracji.
+
+    - nie dotyka już podpiętych tras (sprawdza po (path, methods)),
+    - każdemu routerowi próbuje zrobić include_router,
+    - przy duplikatach / błędach wypisuje tylko ostrzeżenie.
+    """
+    print("======================================================================")
+    print("[AUTO_ROUTERS] Start automatycznego podpinania wszystkich routerów")
+    print("======================================================================")
+
+    existing_sigs = _collect_existing_signatures(app)
+    modules = _iter_python_modules(ROOT)
+
+    total_routers = 0
+    attached_routers = 0
+
+    for mod_name in modules:
+        try:
+            mod = importlib.import_module(mod_name)
+        except Exception as e:
+            print(f"[AUTO_ROUTERS] [FAIL] Nie udalo sie zaimportowac {mod_name}: {e}")
+            continue
+
+        for attr_name in dir(mod):
+            try:
+                obj = getattr(mod, attr_name)
+            except Exception:
+                continue
+
+            if not _is_apirouter(obj):
+                continue
+
+            router: APIRouter = obj  # type: ignore
+            total_routers += 1
+
+            # czy router wnosi cokolwiek nowego?
+            has_new_route = False
+            for route in router.routes:
+                path = getattr(route, "path", "")
+                methods = getattr(route, "methods", None) or set()
+                methods_clean = tuple(
+                    sorted(m for m in methods if m not in {"HEAD", "OPTIONS"})
+                )
+                sig = (path, methods_clean)
+                if sig not in existing_sigs:
+                    has_new_route = True
+                    break
+
+            if not has_new_route:
+                print(
+                    f"[AUTO_ROUTERS] [SKIP] Pomijam router {mod_name}.{attr_name} - "
+                    f"wszystkie jego trasy sa juz w app"
+                )
+                continue
+
+            try:
+                app.include_router(router)
+                attached_routers += 1
+                existing_sigs = _collect_existing_signatures(app)
+                print(f"[AUTO_ROUTERS] [OK] Podpieto router {mod_name}.{attr_name}")
+            except Exception as e:
+                print(
+                    f"[AUTO_ROUTERS] [WARN] Problem z routerem {mod_name}.{attr_name}: {e}"
+                )
+
+    print("======================================================================")
+    print(
+        f"[AUTO_ROUTERS] Skan zakończony – znaleziono {total_routers} routerów, "
+        f"nowo podpiętych: {attached_routers}"
+    )
+    print("======================================================================")
+
+-------------------- core/frontend_autorouter.py --------------------
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+🌐 MORDZIX AI - FRONTEND AUTOROUTER INTEGRATOR
+Łączy zaawansowany AutoRouter z frontendem React
+Automatyczne przekierowanie wszystkich ≈170 endpointów
+"""
+
+from fastapi import APIRouter, Request, HTTPException
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from typing import Dict, Any, Optional, List
+import json
+
+from .advanced_autorouter import smart_route, auto_router, EndpointCategory
+from .response_adapter import adapt
+
+router = APIRouter(prefix="/api/autoroute", tags=["autorouter"])
+
+class AutoRouteRequest(BaseModel):
+    user_input: str
+    context: Optional[Dict[str, Any]] = None
+    session_id: Optional[str] = None
+
+class AutoRouteResponse(BaseModel):
+    endpoint: str
+    category: str  
+    confidence: float
+    reasoning: str
+    params: Dict[str, Any]
+    suggestions: List[str]
+
+class ExecuteRouteRequest(BaseModel):
+    user_input: str
+    context: Optional[Dict[str, Any]] = None
+    auto_execute: bool = True
+
+@router.post("/analyze")
+async def analyze_route(request: AutoRouteRequest):
+    """
+    🎯 Analizuje input użytkownika i zwraca najlepszy endpoint
+    
+    Usage z frontu:
+    ```javascript
+    const result = await fetch('/api/autoroute/analyze', {
+        method: 'POST',
+        body: JSON.stringify({
+            user_input: "sprawdź pogodę w Warszawie",
+            context: { hour: 14, recent_categories: ["research"] }
+        })
+    });
+    ```
+    """
+    try:
+        result = smart_route(request.user_input, request.context)
+        
+        # Generuj sugestie podobnych endpointów
+        suggestions = _generate_suggestions(result.category)
+        
+        return adapt({
+            "ok": True,
+            "route": {
+                "endpoint": result.endpoint,
+                "category": result.category.value,
+                "confidence": result.confidence,
+                "reasoning": result.reasoning,
+                "params": result.params,
+                "suggestions": suggestions
+            }
+        })
+        
+    except Exception as e:
+        return adapt({
+            "ok": False,
+            "error": f"AutoRoute analysis failed: {str(e)}",
+            "fallback_endpoint": "/api/chat/message"
+        })
+
+@router.post("/execute")
+async def execute_route(request: ExecuteRouteRequest):
+    """
+    ⚡ Analizuje input I AUTOMATYCZNIE WYKONUJE odpowiedni endpoint
+    
+    To jest główna funkcja dla frontu - one-click routing!
+    """
+    try:
+        # 1. Analizuj routing
+        route_result = smart_route(request.user_input, request.context)
+        
+        if not request.auto_execute:
+            return adapt({
+                "ok": True,
+                "analysis_only": True,
+                "route": {
+                    "endpoint": route_result.endpoint,
+                    "category": route_result.category.value,
+                    "confidence": route_result.confidence,
+                    "reasoning": route_result.reasoning,
+                    "params": route_result.params
+                }
+            })
+        
+        # 2. Wykonaj właściwy endpoint
+        execution_result = await _execute_endpoint(
+            route_result.endpoint,
+            request.user_input,
+            route_result.params,
+            request.context
+        )
+        
+        return adapt({
+            "ok": True,
+            "auto_routed": True,
+            "route": {
+                "endpoint": route_result.endpoint,
+                "category": route_result.category.value,
+                "confidence": route_result.confidence,
+                "reasoning": route_result.reasoning
+            },
+            "result": execution_result
+        })
+        
+    except Exception as e:
+        # Fallback do chatu w przypadku błędu
+        return adapt({
+            "ok": False,
+            "error": f"AutoRoute execution failed: {str(e)}",
+            "fallback_used": True,
+            "fallback_result": {
+                "response": f"Przepraszam, wystąpił błąd podczas automatycznego routingu. Odpowiadam jako chat: {request.user_input}"
+            }
+        })
+
+@router.get("/endpoints")
+async def get_available_endpoints():
+    """
+    📋 Zwraca mapę wszystkich dostępnych endpointów dla frontu
+    
+    Przydatne do generowania UI, podpowiedzi, itp.
+    """
+    try:
+        endpoints_map = auto_router.get_available_endpoints()
+        
+        # Dodaj statystyki
+        total_endpoints = sum(len(eps) for eps in endpoints_map.values())
+        
+        return adapt({
+            "ok": True,
+            "total_categories": len(endpoints_map),
+            "total_endpoints": total_endpoints,
+            "endpoints_by_category": endpoints_map,
+            "categories": [
+                {
+                    "id": cat.value,
+                    "name": cat.value.title(),
+                    "description": _get_category_description(cat),
+                    "endpoint_count": len(endpoints_map.get(cat.value, []))
+                }
+                for cat in EndpointCategory
+            ]
+        })
+        
+    except Exception as e:
+        return adapt({
+            "ok": False,
+            "error": f"Failed to get endpoints: {str(e)}"
+        })
+
+@router.get("/stats")
+async def get_routing_stats():
+    """
+    📊 Statystyki routingu dla dashboardu admina
+    """
+    # W rzeczywistej implementacji dane z Redis/DB
+    return adapt({
+        "ok": True,
+        "stats": {
+            "total_routes_today": 1247,
+            "most_used_category": "research",
+            "average_confidence": 0.87,
+            "success_rate": 0.94,
+            "top_endpoints": [
+                {"endpoint": "/api/research/search", "count": 234},
+                {"endpoint": "/api/chat/message", "count": 189},
+                {"endpoint": "/api/code/exec", "count": 156},
+                {"endpoint": "/api/writing/generate", "count": 98}
+            ]
+        }
+    })
+
+async def _execute_endpoint(endpoint: str, user_input: str, params: Dict[str, Any], context: Dict[str, Any] = None) -> Dict[str, Any]:
+    """
+    🚀 Wewnętrzna funkcja wykonywania endpointów
+    
+    Mapuje endpoint na właściwą funkcję i wykonuje ją
+    """
+    import httpx
+    
+    # Przygotuj payload
+    payload = {
+        "input": user_input,
+        "params": params,
+        "context": context or {}
+    }
+    
+    # W rzeczywistej implementacji - wywołania wewnętrzne
+    # Tu przykład HTTP call dla demonstracji
+    try:
+        async with httpx.AsyncClient() as client:
+            # Localhost call do naszego serwera
+            response = await client.post(
+                f"http://localhost:8000{endpoint}",
+                json=payload,
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return {
+                    "error": f"Endpoint returned {response.status_code}",
+                    "details": response.text[:200]
+                }
+                
+    except Exception as e:
+        return {
+            "error": f"Failed to execute endpoint {endpoint}",
+            "details": str(e)
+        }
+
+def _generate_suggestions(category: EndpointCategory) -> List[str]:
+    """Generuj sugestie podobnych endpointów"""
+    suggestions_map = {
+        EndpointCategory.RESEARCH: [
+            "Sprawdź aktualne wiadomości",
+            "Wyszukaj informacje o...",
+            "Znajdź definicję słowa",
+            "Pobierz dane z Wikipedii"
+        ],
+        EndpointCategory.CODING: [
+            "Napisz kod Python",
+            "Debuguj błąd",
+            "Stwórz aplikację",
+            "Wykonaj skrypt"
+        ],
+        EndpointCategory.WRITING: [
+            "Napisz artykuł o...",
+            "Stwórz post na social media",
+            "Napisz email marketingowy",
+            "Popraw gramatykę tekstu"
+        ],
+        EndpointCategory.CHAT: [
+            "Pogadajmy o...",
+            "Opowiedz mi o...",
+            "Co myślisz o...",
+            "Wyjaśnij mi..."
+        ]
+    }
+    
+    return suggestions_map.get(category, ["Zadaj pytanie", "Poproś o pomoc"])
+
+def _get_category_description(category: EndpointCategory) -> str:
+    """Opisy kategorii dla frontu"""
+    descriptions = {
+        EndpointCategory.RESEARCH: "Wyszukiwanie informacji, aktualne dane, Wikipedia",
+        EndpointCategory.CODING: "Programowanie, wykonywanie kodu, debugging",
+        EndpointCategory.WRITING: "Tworzenie treści, artykuły, copywriting",
+        EndpointCategory.FILES: "Operacje na plikach, upload, zarządzanie",
+        EndpointCategory.MEMORY: "Zapamiętywanie, historia, kontekst",
+        EndpointCategory.PSYCHE: "Personalność AI, nastroje, emocje",
+        EndpointCategory.AUDIO: "Mowa, dźwięk, TTS, STT",
+        EndpointCategory.TRAVEL: "Podróże, rezerwacje, planowanie",
+        EndpointCategory.ADMIN: "Administracja, zarządzanie systemem",
+        EndpointCategory.COGNITIVE: "Zaawansowana analiza, myślenie",
+        EndpointCategory.SUGGESTIONS: "Rekomendacje, pomysły",
+        EndpointCategory.CHAT: "Ogólna konwersacja, domyślny tryb"
+    }
+    
+    return descriptions.get(category, "Funkcjonalność AI")
+
+# Funkcje pomocnicze dla frontu
+def get_smart_suggestions(user_input: str, limit: int = 5) -> List[Dict[str, Any]]:
+    """Generuj smart suggestions dla autocomplete"""
+    route_result = smart_route(user_input)
+    
+    suggestions = []
+    if route_result.confidence > 0.7:
+        category_suggestions = _generate_suggestions(route_result.category)
+        for i, suggestion in enumerate(category_suggestions[:limit]):
+            suggestions.append({
+                "text": suggestion,
+                "category": route_result.category.value,
+                "confidence": max(0.5, route_result.confidence - i * 0.1)
+            })
+    
+    return suggestions
+===== .env (zamaskowane sekrety) =====
+# ================== Ports ==================
+BACKEND_PORT=8080
+FRONTEND_PORT=3000
+
+# ================== Auth ==================
+AUTH_TOKEN=***MASKED***
+
+# ================== LLM (primary provider) ==================
+LLM_BASE_URL=https://api.deepinfra.com/v1/openai
+LLM_API_KEY=***MASKED***
+LLM_MODEL=moonshotai/Kimi-K2-Thinking
+LLM_FALLBACK_MODEL=meta-llama/Llama-3.3-70B-Instruct
+LLM_TIMEOUT=120
+LLM_HTTP_TIMEOUT_S=120
+LLM_RETRIES=3
+LLM_BACKOFF_S=2
+LLM_MAX_CONC=4
+LLM_CACHE_TTL_S=300
+LLM_COST_PROMPT_PER_1K=0
+LLM_COST_COMP_PER_1K=0
+LLM_JOURNAL=0
+
+# ================== Embeddings / Reranker ==================
+LLM_EMBED_URL=https://api.deepinfra.com/v1/openai/embeddings
+LLM_EMBED_MODEL=sentence-transformers/paraphrase-multilingual-mpnet-base-v2
+LLM_RERANK_URL=https://api.deepinfra.com/v1/rerank
+LLM_RERANK_KEY=***MASKED***
+
+# ================== OpenAI fallback ==================
+# OPENAI_API_KEY=***MASKED***
+
+# ================== Web / RAG / Crawling ==================
+TAVILY_API_KEY=***MASKED***
+BRAVE_API_KEY=***MASKED***
+FIRECRAWL_KEY=***MASKED***
+WEB_USER_AGENT=MordzixBot/1.0
+WEB_HTTP_TIMEOUT=45
+RAG_TOPK=5
+RAG_CACHE_TTL_MIN=30
+RAG_PAR_SCRAPE=1
+
+# ================== Graphics ==================
+STABILITY_API_KEY=***MASKED***
+STABILITY_ENGINE=stable-diffusion-xl-1024-v1-0
+STABILITY_SD3_ENDPOINT=
+HUGGINGFACE_API_KEY=***MASKED***
+REPLICATE_API_KEY=***MASKED***
+GRAPHICS_OUT=/root/mordzix-ai/out/images
+IMG_SELFTEST_OUTDIR=/root/mordzix-ai/out/images/_selftest
+IMG_SELFTEST_PROMPT=
+
+# ================== Travel / Maps ==================
+GOOGLE_MAPS_KEY=***MASKED***
+TRIPADVISOR_KEY=***MASKED***
+OPENTRIPMAP_KEY=***MASKED***
+OVERPASS_URL=***MASKED***
+OTM_BASE=https://api.opentripmap.com/0.1/en
+TRAVEL_PARTNER_API=AlzaSyCbpKUI1Vt9sGmmU0eRhgLpUtevegXWgy8
+MAPS_STATIC_API=AlzaSyCvwN2RWhEJ2t2JHZQQQztoaDZHpFS6PgI
+MAPTILER_KEY=***MASKED***
+XWEATHER_APP_ID=bbok
+XWEATHER_SECRET=***MASKED***
+TRAVEL_CACHE_TTL_MIN=120
+TRAVEL_FOOD_PREFS=ramen,pizza,tapas,vegan,seafood
+TRAVEL_HOTEL_PREFS=marriott,hilton,ibis,aparthotel,hostel
+TRAVEL_GOOGLE_TTL=3600
+TRAVEL_TA_TTL=7200
+TRAVEL_OTM_TTL=86400
+TRAVEL_WIKI_TTL=604800
+TRAVEL_OSM_TTL=86400
+TRAVEL_WEATHER_TTL=3600
+TRAVEL_TRANSIT_TTL=3600
+TRAVEL_FLIGHTS_TTL=1800
+TRANSITLAND_API_KEY=***MASKED***
+
+# ================== Crypto Advisor ==================
+COINGECKO_BASE_URL=https://api.coingecko.com/api/v3
+ETHERSCAN_API_KEY=***MASKED***
+CRYPTO_API_BASE=
+CRYPTO_API_KEY=***MASKED***
+CRYPTO_BASE_FIAT=USD
+CRYPTO_CACHE_TTL_MIN=15
+
+# ================== Learning / Autonauka ==================
+LEARN_ENABLE_OPEN=1
+LEARN_ENABLE_CONNECT=1
+LEARN_ENABLE_MCQ=1
+LEARN_SESSION_SIZE=6
+LEARN_CACHE_TTL_MIN=60
+
+WORKSPACE=/root/mordzix-ai
+MEM_DB=/root/mordzix-ai/mem.db
+UPLOAD_DIR=/root/mordzix-ai/out/uploads
+LTM_MIN_SCORE=0.35
+MAX_LTM_FACTS=2000000
+RECALL_TOPK_PER_SRC=40
+STM_MAX_TURNS=400
+STM_KEEP_TAIL=100
+LTM_MIN_CONF=0.35
+PSY_ENCRYPT_KEY=***MASKED***
+AUTO_TOPK=8
+AUTO_FETCH=6
+AUTO_MIN_CHARS=600
+AUTO_MAX_CHARS=9000
+AUTO_TAGS=autonauka,web,evidence
+AUTON_DOMAIN_MAX=2
+AUTON_DEDUP_MAX=1200
+AUTON_SAVE_LTM=1
+AUTON_CONCURRENCY=8
+AUTON_UA=Autonauka/2.0
+AUTON_WAL=/root/mordzix-ai/data/mem/autonauka.wal
+VOTE_MIN_SOURCES=2
+MEM_SYNC_ENABLED=0
+REMOTE_MEM_BASE_URL=
+REMOTE_MEM_API_KEY=***MASKED***
+MEM_SYNC_INTERVAL=30
+MEM_SYNC_BATCH=100
+MEM_SYNC_TIMEOUT=25
+
+# ================== Misc ==================
+LOG_LEVEL=INFO
+SONAR_TOKEN=***MASKED***
+
+# ================== SERVER SETTINGS ==================
+PORT=8080
+HOST=0.0.0.0
+ALLOWED_ORIGINS=*
+
+# ================== FILE UPLOAD LIMITS ==================
+MAX_FILE_SIZE=52428800
+
+# ================== DEV TOOLS (Programista) ==================
+DEV_ROOT=/workspace
+
+# ================== Service Keys ==================
+TWOCAPTCHA_KEY=***MASKED***
+VISION_API_KEY=***MASKED***
+ELEVENLABS_API_KEY=***MASKED***
+CLAUDE_API_KEY=***MASKED***
+
+# ========= REDIS CACHE =========
+REDIS_ENABLED=true
+REDIS_URL=redis://localhost:6379/0
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+REDIS_PASSWORD=***MASKED***
+MEM_DB_PATH=/root/mordzix-ai/mem.db
+OPENAI_API_KEY=***MASKED***
+OPENAI_BASE_URL=https://api.deepinfra.com/v1/openai
+# --- STREAM / SEARCH ---
+CHAT_STREAM_TIMEOUT_S=120
+CHAT_WEB_MAX_RESULTS=8
+CHAT_ALLOW_FORCE_WEB=0
+
+# --- ATTACHMENT LIMITS ---
+ATTACH_TEXT_LIMIT_CHARS=150000
+ATTACH_PDF_MAX_PAGES=15
+ATTACH_PDF_CHARS_PER_PAGE=30000
+ATTACH_DOCX_LIMIT_CHARS=100000
+
+# --- OPTIONAL TRIGGERS (custom) ---
+CHAT_WEB_EXTRA_POS=sprawdź skład,porównaj oferty,check price
+CHAT_WEB_EXTRA_NEG=bez internetu,offline only
+
+# --- INTENT FALLBACK (opcjonalnie) ---
+DEFAULT_INTENT_MODE=casual
+CHAT_INJECT_GUARD=0

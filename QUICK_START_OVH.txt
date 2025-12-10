@@ -1,0 +1,104 @@
+╔══════════════════════════════════════════════════════════╗
+║  🚀 MORDZIX AI - QUICK START OVH                        ║
+╚══════════════════════════════════════════════════════════╝
+
+1️⃣ UPLOAD NA VPS:
+   scp -r full/ ubuntu@your-vps-ip:/home/ubuntu/mordzix
+
+2️⃣ SSH NA VPS:
+   ssh ubuntu@your-vps-ip
+
+3️⃣ KONFIGURACJA:
+   cd ~/mordzix
+   cp .env.example .env
+   nano .env
+   # Wypełnij LLM_API_KEY (DeepInfra)
+
+4️⃣ URUCHOM:
+   chmod +x start.sh
+   ./start.sh
+
+5️⃣ OTWÓRZ PORT:
+   sudo ufw allow 8080/tcp
+   sudo ufw enable
+
+6️⃣ TEST:
+   http://your-vps-ip:8080
+
+══════════════════════════════════════════════════════════
+
+📦 CO JEST W TYM FOLDERZE:
+
+✅ app.py - FastAPI main
+✅ assistant_endpoint.py - Chat + 10 intents
+✅ assistant_auto.py - Auto-learning
+✅ 5 endpoints (travel, psyche, files, admin, programista)
+✅ core/ - 11 modułów (memory, llm, semantic...)
+✅ chat.html - PWA frontend
+✅ start.sh - Auto-installer (executable)
+✅ requirements.txt - Dependencies
+✅ .env.example - Template
+✅ Dockerfile + docker-compose.yml
+✅ README.md + INSTALL_OVH.md
+
+══════════════════════════════════════════════════════════
+
+🔥 WYMAGANIA:
+
+Minimalne:
+- VPS: 2 vCores, 4GB RAM, 20GB SSD
+- OS: Ubuntu 22.04
+- Python: 3.10+
+- API Key: DeepInfra (WYMAGANY)
+
+Zalecane:
+- VPS: 4 vCores, 8GB RAM, 40GB SSD
+- API Keys: DeepInfra + SERPAPI + Firecrawl
+
+══════════════════════════════════════════════════════════
+
+💡 TIPS:
+
+1. Uruchom w screen/tmux:
+   screen -S mordzix
+   ./start.sh
+   Ctrl+A, D (odłącz)
+
+2. Systemd service (auto-restart):
+   Zobacz: INSTALL_OVH.md → sekcja 9
+
+3. Nginx + SSL:
+   Zobacz: INSTALL_OVH.md → sekcja "Nginx + Domain"
+
+4. Logi:
+   tail -f logs/mordzix.log
+
+5. Restart:
+   sudo systemctl restart mordzix
+
+══════════════════════════════════════════════════════════
+
+🆘 HELP:
+
+Problem z portem?
+→ sudo lsof -i :8080 && sudo kill -9 <PID>
+
+Brak pakietów?
+→ pip3 install -r requirements.txt --user
+
+Out of memory?
+→ Zobacz INSTALL_OVH.md → "Troubleshooting"
+
+══════════════════════════════════════════════════════════
+
+🔗 LINKI:
+
+Docs:        INSTALL_OVH.md (szczegółowy guide)
+GitHub:      github.com/ahui69/aktywmrd
+DeepInfra:   deepinfra.com (API key)
+
+══════════════════════════════════════════════════════════
+
+✅ GOTOWE! WRZUĆ NA OVH I URUCHOM!
+
+🔥 ./start.sh

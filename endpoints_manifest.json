@@ -1,0 +1,1938 @@
+{
+  "root": "/root/mordzix-ai",
+  "total": 155,
+  "groups": {
+    "chat": {
+      "name": "chat",
+      "count": 3,
+      "routes": [
+        {
+          "path": "/api/chat/assistant",
+          "methods": [
+            "POST"
+          ],
+          "name": "chat_assistant",
+          "tags": [],
+          "module": "core.assistant_endpoint",
+          "endpoint": "chat_assistant"
+        },
+        {
+          "path": "/api/chat/assistant/stream",
+          "methods": [
+            "POST"
+          ],
+          "name": "chat_assistant_stream",
+          "tags": [],
+          "module": "core.assistant_endpoint",
+          "endpoint": "chat_assistant_stream"
+        },
+        {
+          "path": "/api/chat/auto",
+          "methods": [
+            "POST"
+          ],
+          "name": "force_auto_learn",
+          "tags": [],
+          "module": "core.assistant_endpoint",
+          "endpoint": "force_auto_learn"
+        }
+      ]
+    },
+    "code": {
+      "name": "code",
+      "count": 14,
+      "routes": [
+        {
+          "path": "/api/code/snapshot",
+          "methods": [
+            "GET"
+          ],
+          "name": "snapshot",
+          "tags": [],
+          "module": "legacy_root_py.programista_endpoint",
+          "endpoint": "snapshot"
+        },
+        {
+          "path": "/api/code/exec",
+          "methods": [
+            "POST"
+          ],
+          "name": "exec_command",
+          "tags": [],
+          "module": "legacy_root_py.programista_endpoint",
+          "endpoint": "exec_command"
+        },
+        {
+          "path": "/api/code/write",
+          "methods": [
+            "POST"
+          ],
+          "name": "write_file",
+          "tags": [],
+          "module": "legacy_root_py.programista_endpoint",
+          "endpoint": "write_file"
+        },
+        {
+          "path": "/api/code/read",
+          "methods": [
+            "GET"
+          ],
+          "name": "read_file",
+          "tags": [],
+          "module": "legacy_root_py.programista_endpoint",
+          "endpoint": "read_file"
+        },
+        {
+          "path": "/api/code/tree",
+          "methods": [
+            "GET"
+          ],
+          "name": "read_tree",
+          "tags": [],
+          "module": "legacy_root_py.programista_endpoint",
+          "endpoint": "read_tree"
+        },
+        {
+          "path": "/api/code/init",
+          "methods": [
+            "POST"
+          ],
+          "name": "project_init",
+          "tags": [],
+          "module": "legacy_root_py.programista_endpoint",
+          "endpoint": "project_init"
+        },
+        {
+          "path": "/api/code/plan",
+          "methods": [
+            "POST"
+          ],
+          "name": "plan",
+          "tags": [],
+          "module": "legacy_root_py.programista_endpoint",
+          "endpoint": "plan"
+        },
+        {
+          "path": "/api/code/lint",
+          "methods": [
+            "POST"
+          ],
+          "name": "lint",
+          "tags": [],
+          "module": "legacy_root_py.programista_endpoint",
+          "endpoint": "lint"
+        },
+        {
+          "path": "/api/code/test",
+          "methods": [
+            "POST"
+          ],
+          "name": "test",
+          "tags": [],
+          "module": "legacy_root_py.programista_endpoint",
+          "endpoint": "test"
+        },
+        {
+          "path": "/api/code/format",
+          "methods": [
+            "POST"
+          ],
+          "name": "format_code",
+          "tags": [],
+          "module": "legacy_root_py.programista_endpoint",
+          "endpoint": "format_code"
+        },
+        {
+          "path": "/api/code/git",
+          "methods": [
+            "POST"
+          ],
+          "name": "git",
+          "tags": [],
+          "module": "legacy_root_py.programista_endpoint",
+          "endpoint": "git"
+        },
+        {
+          "path": "/api/code/docker/build",
+          "methods": [
+            "POST"
+          ],
+          "name": "docker_build",
+          "tags": [],
+          "module": "legacy_root_py.programista_endpoint",
+          "endpoint": "docker_build"
+        },
+        {
+          "path": "/api/code/docker/run",
+          "methods": [
+            "POST"
+          ],
+          "name": "docker_run",
+          "tags": [],
+          "module": "legacy_root_py.programista_endpoint",
+          "endpoint": "docker_run"
+        },
+        {
+          "path": "/api/code/deps/install",
+          "methods": [
+            "POST"
+          ],
+          "name": "deps_install",
+          "tags": [],
+          "module": "legacy_root_py.programista_endpoint",
+          "endpoint": "deps_install"
+        }
+      ]
+    },
+    "files": {
+      "name": "files",
+      "count": 11,
+      "routes": [
+        {
+          "path": "/api/files/upload",
+          "methods": [
+            "POST"
+          ],
+          "name": "upload",
+          "tags": [
+            "files"
+          ],
+          "module": "core.files_endpoint",
+          "endpoint": "upload"
+        },
+        {
+          "path": "/api/files/{tenant}/{day}/{name}",
+          "methods": [
+            "GET"
+          ],
+          "name": "download",
+          "tags": [
+            "files"
+          ],
+          "module": "core.files_endpoint",
+          "endpoint": "download"
+        },
+        {
+          "path": "/api/files/thumb/{tenant}/{day}/{name}",
+          "methods": [
+            "GET"
+          ],
+          "name": "thumb",
+          "tags": [
+            "files"
+          ],
+          "module": "core.files_endpoint",
+          "endpoint": "thumb"
+        },
+        {
+          "path": "/api/files/upload",
+          "methods": [
+            "POST"
+          ],
+          "name": "upload_file",
+          "tags": [],
+          "module": "legacy_root_py.files_endpoint",
+          "endpoint": "upload_file"
+        },
+        {
+          "path": "/api/files/upload/base64",
+          "methods": [
+            "POST"
+          ],
+          "name": "upload_base64",
+          "tags": [],
+          "module": "legacy_root_py.files_endpoint",
+          "endpoint": "upload_base64"
+        },
+        {
+          "path": "/api/files/list",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_files",
+          "tags": [],
+          "module": "legacy_root_py.files_endpoint",
+          "endpoint": "list_files"
+        },
+        {
+          "path": "/api/files/download",
+          "methods": [
+            "GET"
+          ],
+          "name": "download_file",
+          "tags": [],
+          "module": "legacy_root_py.files_endpoint",
+          "endpoint": "download_file"
+        },
+        {
+          "path": "/api/files/analyze",
+          "methods": [
+            "POST"
+          ],
+          "name": "analyze_file",
+          "tags": [],
+          "module": "legacy_root_py.files_endpoint",
+          "endpoint": "analyze_file"
+        },
+        {
+          "path": "/api/files/delete",
+          "methods": [
+            "POST"
+          ],
+          "name": "delete_file",
+          "tags": [],
+          "module": "legacy_root_py.files_endpoint",
+          "endpoint": "delete_file"
+        },
+        {
+          "path": "/api/files/stats",
+          "methods": [
+            "GET"
+          ],
+          "name": "files_stats",
+          "tags": [],
+          "module": "legacy_root_py.files_endpoint",
+          "endpoint": "files_stats"
+        },
+        {
+          "path": "/api/files/batch/analyze",
+          "methods": [
+            "POST"
+          ],
+          "name": "batch_analyze",
+          "tags": [],
+          "module": "legacy_root_py.files_endpoint",
+          "endpoint": "batch_analyze"
+        }
+      ]
+    },
+    "travel": {
+      "name": "travel",
+      "count": 6,
+      "routes": [
+        {
+          "path": "/api/travel/search",
+          "methods": [
+            "GET"
+          ],
+          "name": "search_travel",
+          "tags": [],
+          "module": "core.travel_endpoint",
+          "endpoint": "search_travel"
+        },
+        {
+          "path": "/api/travel/geocode",
+          "methods": [
+            "GET"
+          ],
+          "name": "geocode_city",
+          "tags": [],
+          "module": "core.travel_endpoint",
+          "endpoint": "geocode_city"
+        },
+        {
+          "path": "/api/travel/attractions/{city}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_attractions",
+          "tags": [],
+          "module": "core.travel_endpoint",
+          "endpoint": "get_attractions"
+        },
+        {
+          "path": "/api/travel/hotels/{city}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_hotels",
+          "tags": [],
+          "module": "core.travel_endpoint",
+          "endpoint": "get_hotels"
+        },
+        {
+          "path": "/api/travel/restaurants/{city}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_restaurants",
+          "tags": [],
+          "module": "core.travel_endpoint",
+          "endpoint": "get_restaurants"
+        },
+        {
+          "path": "/api/travel/trip-plan",
+          "methods": [
+            "GET"
+          ],
+          "name": "plan_trip",
+          "tags": [],
+          "module": "core.travel_endpoint",
+          "endpoint": "plan_trip"
+        }
+      ]
+    },
+    "admin": {
+      "name": "admin",
+      "count": 5,
+      "routes": [
+        {
+          "path": "/api/admin/cache/stats",
+          "methods": [
+            "GET"
+          ],
+          "name": "cache_stats",
+          "tags": [],
+          "module": "legacy_root_py.admin_endpoint",
+          "endpoint": "cache_stats"
+        },
+        {
+          "path": "/api/admin/cache/clear",
+          "methods": [
+            "POST"
+          ],
+          "name": "clear_cache",
+          "tags": [],
+          "module": "legacy_root_py.admin_endpoint",
+          "endpoint": "clear_cache"
+        },
+        {
+          "path": "/api/admin/ratelimit/usage/{user_id}",
+          "methods": [
+            "GET"
+          ],
+          "name": "rate_limit_usage",
+          "tags": [],
+          "module": "legacy_root_py.admin_endpoint",
+          "endpoint": "rate_limit_usage"
+        },
+        {
+          "path": "/api/admin/ratelimit/config",
+          "methods": [
+            "GET"
+          ],
+          "name": "rate_limit_config",
+          "tags": [],
+          "module": "legacy_root_py.admin_endpoint",
+          "endpoint": "rate_limit_config"
+        },
+        {
+          "path": "/api/admin/jwt/rotate",
+          "methods": [
+            "POST"
+          ],
+          "name": "admin_rotate_jwt",
+          "tags": [],
+          "module": "legacy_root_py.admin_endpoint",
+          "endpoint": "admin_rotate_jwt"
+        }
+      ]
+    },
+    "captcha": {
+      "name": "captcha",
+      "count": 2,
+      "routes": [
+        {
+          "path": "/api/captcha/solve",
+          "methods": [
+            "POST"
+          ],
+          "name": "solve_captcha",
+          "tags": [
+            "captcha"
+          ],
+          "module": "legacy_root_py.captcha_endpoint",
+          "endpoint": "solve_captcha"
+        },
+        {
+          "path": "/api/captcha/balance",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_balance",
+          "tags": [
+            "captcha"
+          ],
+          "module": "legacy_root_py.captcha_endpoint",
+          "endpoint": "get_balance"
+        }
+      ]
+    },
+    "prometheus": {
+      "name": "prometheus",
+      "count": 3,
+      "routes": [
+        {
+          "path": "/api/prometheus/metrics",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_prometheus_metrics",
+          "tags": [
+            "monitoring"
+          ],
+          "module": "core.prometheus_endpoint",
+          "endpoint": "get_prometheus_metrics"
+        },
+        {
+          "path": "/api/prometheus/health",
+          "methods": [
+            "GET"
+          ],
+          "name": "health_check",
+          "tags": [
+            "monitoring"
+          ],
+          "module": "core.prometheus_endpoint",
+          "endpoint": "health_check"
+        },
+        {
+          "path": "/api/prometheus/stats",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_stats",
+          "tags": [
+            "monitoring"
+          ],
+          "module": "core.prometheus_endpoint",
+          "endpoint": "get_stats"
+        }
+      ]
+    },
+    "tts": {
+      "name": "tts",
+      "count": 2,
+      "routes": [
+        {
+          "path": "/api/tts/speak",
+          "methods": [
+            "POST"
+          ],
+          "name": "speak",
+          "tags": [
+            "tts"
+          ],
+          "module": "legacy_root_py.tts_endpoint",
+          "endpoint": "speak"
+        },
+        {
+          "path": "/api/tts/voices",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_voices",
+          "tags": [
+            "tts"
+          ],
+          "module": "legacy_root_py.tts_endpoint",
+          "endpoint": "list_voices"
+        }
+      ]
+    },
+    "stt": {
+      "name": "stt",
+      "count": 4,
+      "routes": [
+        {
+          "path": "/api/stt/transcribe",
+          "methods": [
+            "POST"
+          ],
+          "name": "transcribe",
+          "tags": [
+            "stt"
+          ],
+          "module": "core.stt_endpoint",
+          "endpoint": "transcribe"
+        },
+        {
+          "path": "/api/stt/file/{tenant}/{name}",
+          "methods": [
+            "GET"
+          ],
+          "name": "stt_file",
+          "tags": [
+            "stt"
+          ],
+          "module": "core.stt_endpoint",
+          "endpoint": "stt_file"
+        },
+        {
+          "path": "/api/stt/transcribe",
+          "methods": [
+            "POST"
+          ],
+          "name": "transcribe_audio",
+          "tags": [
+            "speech"
+          ],
+          "module": "legacy_root_py.stt_endpoint",
+          "endpoint": "transcribe_audio"
+        },
+        {
+          "path": "/api/stt/providers",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_stt_providers",
+          "tags": [
+            "speech"
+          ],
+          "module": "legacy_root_py.stt_endpoint",
+          "endpoint": "list_stt_providers"
+        }
+      ]
+    },
+    "writing": {
+      "name": "writing",
+      "count": 12,
+      "routes": [
+        {
+          "path": "/api/writing/creative",
+          "methods": [
+            "POST"
+          ],
+          "name": "creative_writing",
+          "tags": [],
+          "module": "legacy_root_py.writing_endpoint",
+          "endpoint": "creative_writing"
+        },
+        {
+          "path": "/api/writing/vinted",
+          "methods": [
+            "POST"
+          ],
+          "name": "vinted_description",
+          "tags": [],
+          "module": "legacy_root_py.writing_endpoint",
+          "endpoint": "vinted_description"
+        },
+        {
+          "path": "/api/writing/social",
+          "methods": [
+            "POST"
+          ],
+          "name": "social_media_post",
+          "tags": [],
+          "module": "legacy_root_py.writing_endpoint",
+          "endpoint": "social_media_post"
+        },
+        {
+          "path": "/api/writing/auction",
+          "methods": [
+            "POST"
+          ],
+          "name": "auction_description",
+          "tags": [],
+          "module": "legacy_root_py.writing_endpoint",
+          "endpoint": "auction_description"
+        },
+        {
+          "path": "/api/writing/auction/pro",
+          "methods": [
+            "POST"
+          ],
+          "name": "auction_pro_description",
+          "tags": [],
+          "module": "legacy_root_py.writing_endpoint",
+          "endpoint": "auction_pro_description"
+        },
+        {
+          "path": "/api/writing/fashion/analyze",
+          "methods": [
+            "POST"
+          ],
+          "name": "fashion_analysis",
+          "tags": [],
+          "module": "legacy_root_py.writing_endpoint",
+          "endpoint": "fashion_analysis"
+        },
+        {
+          "path": "/api/writing/auction/suggest-tags",
+          "methods": [
+            "POST"
+          ],
+          "name": "suggest_auction_tags",
+          "tags": [],
+          "module": "legacy_root_py.writing_endpoint",
+          "endpoint": "suggest_auction_tags"
+        },
+        {
+          "path": "/api/writing/auction/kb/learn",
+          "methods": [
+            "POST"
+          ],
+          "name": "learn_auction_kb",
+          "tags": [],
+          "module": "legacy_root_py.writing_endpoint",
+          "endpoint": "learn_auction_kb"
+        },
+        {
+          "path": "/api/writing/auction/kb/fetch",
+          "methods": [
+            "GET"
+          ],
+          "name": "fetch_auction_kb",
+          "tags": [],
+          "module": "legacy_root_py.writing_endpoint",
+          "endpoint": "fetch_auction_kb"
+        },
+        {
+          "path": "/api/writing/masterpiece/article",
+          "methods": [
+            "POST"
+          ],
+          "name": "masterpiece_article",
+          "tags": [],
+          "module": "legacy_root_py.writing_endpoint",
+          "endpoint": "masterpiece_article"
+        },
+        {
+          "path": "/api/writing/masterpiece/sales",
+          "methods": [
+            "POST"
+          ],
+          "name": "sales_masterpiece",
+          "tags": [],
+          "module": "legacy_root_py.writing_endpoint",
+          "endpoint": "sales_masterpiece"
+        },
+        {
+          "path": "/api/writing/masterpiece/technical",
+          "methods": [
+            "POST"
+          ],
+          "name": "technical_masterpiece",
+          "tags": [],
+          "module": "legacy_root_py.writing_endpoint",
+          "endpoint": "technical_masterpiece"
+        }
+      ]
+    },
+    "batch": {
+      "name": "batch",
+      "count": 4,
+      "routes": [
+        {
+          "path": "/api/batch/process",
+          "methods": [
+            "POST"
+          ],
+          "name": "batch_process_endpoint",
+          "tags": [
+            "LLM Batch Processing"
+          ],
+          "module": "core.batch_endpoint",
+          "endpoint": "batch_process_endpoint"
+        },
+        {
+          "path": "/api/batch/submit",
+          "methods": [
+            "POST"
+          ],
+          "name": "batch_submit_endpoint",
+          "tags": [
+            "LLM Batch Processing"
+          ],
+          "module": "core.batch_endpoint",
+          "endpoint": "batch_submit_endpoint"
+        },
+        {
+          "path": "/api/batch/metrics",
+          "methods": [
+            "GET"
+          ],
+          "name": "batch_metrics_endpoint",
+          "tags": [
+            "LLM Batch Processing"
+          ],
+          "module": "core.batch_endpoint",
+          "endpoint": "batch_metrics_endpoint"
+        },
+        {
+          "path": "/api/batch/shutdown",
+          "methods": [
+            "POST"
+          ],
+          "name": "batch_shutdown_endpoint",
+          "tags": [
+            "LLM Batch Processing"
+          ],
+          "module": "core.batch_endpoint",
+          "endpoint": "batch_shutdown_endpoint"
+        }
+      ]
+    },
+    "memory": {
+      "name": "memory",
+      "count": 6,
+      "routes": [
+        {
+          "path": "/api/memory/add",
+          "methods": [
+            "POST"
+          ],
+          "name": "add",
+          "tags": [
+            "memory"
+          ],
+          "module": "core.memory_endpoint",
+          "endpoint": "add"
+        },
+        {
+          "path": "/api/memory/search",
+          "methods": [
+            "POST"
+          ],
+          "name": "search",
+          "tags": [
+            "memory"
+          ],
+          "module": "core.memory_endpoint",
+          "endpoint": "search"
+        },
+        {
+          "path": "/api/memory/export",
+          "methods": [
+            "GET"
+          ],
+          "name": "export",
+          "tags": [
+            "memory"
+          ],
+          "module": "core.memory_endpoint",
+          "endpoint": "export"
+        },
+        {
+          "path": "/api/memory/import",
+          "methods": [
+            "POST"
+          ],
+          "name": "import_",
+          "tags": [
+            "memory"
+          ],
+          "module": "core.memory_endpoint",
+          "endpoint": "import_"
+        },
+        {
+          "path": "/api/memory/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "status",
+          "tags": [
+            "memory"
+          ],
+          "module": "core.memory_endpoint",
+          "endpoint": "status"
+        },
+        {
+          "path": "/api/memory/optimize",
+          "methods": [
+            "POST"
+          ],
+          "name": "optimize",
+          "tags": [
+            "memory"
+          ],
+          "module": "core.memory_endpoint",
+          "endpoint": "optimize"
+        }
+      ]
+    },
+    "vision": {
+      "name": "vision",
+      "count": 2,
+      "routes": [
+        {
+          "path": "/api/vision/describe",
+          "methods": [
+            "POST"
+          ],
+          "name": "describe",
+          "tags": [
+            "vision"
+          ],
+          "module": "core.vision_endpoint",
+          "endpoint": "describe"
+        },
+        {
+          "path": "/api/vision/ocr",
+          "methods": [
+            "POST"
+          ],
+          "name": "ocr",
+          "tags": [
+            "vision"
+          ],
+          "module": "core.vision_endpoint",
+          "endpoint": "ocr"
+        }
+      ]
+    },
+    "voice": {
+      "name": "voice",
+      "count": 2,
+      "routes": [
+        {
+          "path": "/api/voice/tts",
+          "methods": [
+            "POST"
+          ],
+          "name": "tts",
+          "tags": [
+            "voice"
+          ],
+          "module": "core.voice_endpoint",
+          "endpoint": "tts"
+        },
+        {
+          "path": "/api/voice/file/{tenant}/{name}",
+          "methods": [
+            "GET"
+          ],
+          "name": "voice_file",
+          "tags": [
+            "voice"
+          ],
+          "module": "core.voice_endpoint",
+          "endpoint": "voice_file"
+        }
+      ]
+    },
+    "image": {
+      "name": "image",
+      "count": 2,
+      "routes": [
+        {
+          "path": "/api/image/generate",
+          "methods": [
+            "POST"
+          ],
+          "name": "generate",
+          "tags": [
+            "image"
+          ],
+          "module": "core.image_endpoint",
+          "endpoint": "generate"
+        },
+        {
+          "path": "/api/image/file/{tenant}/{name}",
+          "methods": [
+            "GET"
+          ],
+          "name": "image_file",
+          "tags": [
+            "image"
+          ],
+          "module": "core.image_endpoint",
+          "endpoint": "image_file"
+        }
+      ]
+    },
+    "nlp": {
+      "name": "nlp",
+      "count": 8,
+      "routes": [
+        {
+          "path": "/api/nlp/analyze",
+          "methods": [
+            "POST"
+          ],
+          "name": "analyze_text",
+          "tags": [
+            "nlp"
+          ],
+          "module": "legacy_root_py.nlp_endpoint",
+          "endpoint": "analyze_text"
+        },
+        {
+          "path": "/api/nlp/batch-analyze",
+          "methods": [
+            "POST"
+          ],
+          "name": "batch_analyze_texts",
+          "tags": [
+            "nlp"
+          ],
+          "module": "legacy_root_py.nlp_endpoint",
+          "endpoint": "batch_analyze_texts"
+        },
+        {
+          "path": "/api/nlp/extract-topics",
+          "methods": [
+            "POST"
+          ],
+          "name": "extract_topics",
+          "tags": [
+            "nlp"
+          ],
+          "module": "legacy_root_py.nlp_endpoint",
+          "endpoint": "extract_topics"
+        },
+        {
+          "path": "/api/nlp/stats",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_nlp_stats",
+          "tags": [
+            "nlp"
+          ],
+          "module": "legacy_root_py.nlp_endpoint",
+          "endpoint": "get_nlp_stats"
+        },
+        {
+          "path": "/api/nlp/entities",
+          "methods": [
+            "POST"
+          ],
+          "name": "extract_entities",
+          "tags": [
+            "nlp"
+          ],
+          "module": "legacy_root_py.nlp_endpoint",
+          "endpoint": "extract_entities"
+        },
+        {
+          "path": "/api/nlp/sentiment",
+          "methods": [
+            "POST"
+          ],
+          "name": "analyze_sentiment",
+          "tags": [
+            "nlp"
+          ],
+          "module": "legacy_root_py.nlp_endpoint",
+          "endpoint": "analyze_sentiment"
+        },
+        {
+          "path": "/api/nlp/key-phrases",
+          "methods": [
+            "POST"
+          ],
+          "name": "extract_key_phrases",
+          "tags": [
+            "nlp"
+          ],
+          "module": "legacy_root_py.nlp_endpoint",
+          "endpoint": "extract_key_phrases"
+        },
+        {
+          "path": "/api/nlp/readability",
+          "methods": [
+            "POST"
+          ],
+          "name": "calculate_readability",
+          "tags": [
+            "nlp"
+          ],
+          "module": "legacy_root_py.nlp_endpoint",
+          "endpoint": "calculate_readability"
+        }
+      ]
+    },
+    "autoroute": {
+      "name": "autoroute",
+      "count": 4,
+      "routes": [
+        {
+          "path": "/api/autoroute/analyze",
+          "methods": [
+            "POST"
+          ],
+          "name": "analyze_route",
+          "tags": [
+            "autorouter"
+          ],
+          "module": "core.frontend_autorouter",
+          "endpoint": "analyze_route"
+        },
+        {
+          "path": "/api/autoroute/execute",
+          "methods": [
+            "POST"
+          ],
+          "name": "execute_route",
+          "tags": [
+            "autorouter"
+          ],
+          "module": "core.frontend_autorouter",
+          "endpoint": "execute_route"
+        },
+        {
+          "path": "/api/autoroute/endpoints",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_available_endpoints",
+          "tags": [
+            "autorouter"
+          ],
+          "module": "core.frontend_autorouter",
+          "endpoint": "get_available_endpoints"
+        },
+        {
+          "path": "/api/autoroute/stats",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_routing_stats",
+          "tags": [
+            "autorouter"
+          ],
+          "module": "core.frontend_autorouter",
+          "endpoint": "get_routing_stats"
+        }
+      ]
+    },
+    "lang": {
+      "name": "lang",
+      "count": 1,
+      "routes": [
+        {
+          "path": "/api/lang/detect",
+          "methods": [
+            "POST"
+          ],
+          "name": "detect",
+          "tags": [
+            "lang"
+          ],
+          "module": "core.lang_endpoint",
+          "endpoint": "detect"
+        }
+      ]
+    },
+    "internal": {
+      "name": "internal",
+      "count": 2,
+      "routes": [
+        {
+          "path": "/api/internal/ui_token",
+          "methods": [
+            "GET"
+          ],
+          "name": "ui_token",
+          "tags": [],
+          "module": "legacy_root_py.internal_endpoint",
+          "endpoint": "ui_token"
+        },
+        {
+          "path": "/api/internal/ui",
+          "methods": [
+            "GET"
+          ],
+          "name": "ui_info",
+          "tags": [],
+          "module": "legacy_root_py.internal_ui",
+          "endpoint": "ui_info"
+        }
+      ]
+    },
+    "search": {
+      "name": "search",
+      "count": 5,
+      "routes": [
+        {
+          "path": "/api/search/hybrid",
+          "methods": [
+            "POST"
+          ],
+          "name": "hybrid_search",
+          "tags": [],
+          "module": "core.hybrid_search_endpoint",
+          "endpoint": "hybrid_search"
+        },
+        {
+          "path": "/api/search/test",
+          "methods": [
+            "GET"
+          ],
+          "name": "test_search",
+          "tags": [],
+          "module": "core.hybrid_search_endpoint",
+          "endpoint": "test_search"
+        },
+        {
+          "path": "/api/search/stats",
+          "methods": [
+            "GET"
+          ],
+          "name": "search_stats",
+          "tags": [],
+          "module": "core.hybrid_search_endpoint",
+          "endpoint": "search_stats"
+        },
+        {
+          "path": "/api/search/compare",
+          "methods": [
+            "POST"
+          ],
+          "name": "compare_methods",
+          "tags": [],
+          "module": "core.hybrid_search_endpoint",
+          "endpoint": "compare_methods"
+        },
+        {
+          "path": "/api/search/widget",
+          "methods": [
+            "GET"
+          ],
+          "name": "search_widget",
+          "tags": [],
+          "module": "core.hybrid_search_endpoint",
+          "endpoint": "search_widget"
+        }
+      ]
+    },
+    "endpoints": {
+      "name": "endpoints",
+      "count": 1,
+      "routes": [
+        {
+          "path": "/api/endpoints/list",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_endpoints",
+          "tags": [],
+          "module": "core.app",
+          "endpoint": "list_endpoints"
+        }
+      ]
+    },
+    "automation": {
+      "name": "automation",
+      "count": 1,
+      "routes": [
+        {
+          "path": "/api/automation/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "automation_status",
+          "tags": [],
+          "module": "core.app",
+          "endpoint": "automation_status"
+        }
+      ]
+    },
+    "cognitive": {
+      "name": "cognitive",
+      "count": 10,
+      "routes": [
+        {
+          "path": "/api/cognitive/reflect",
+          "methods": [
+            "POST"
+          ],
+          "name": "self_reflect",
+          "tags": [
+            "cognitive"
+          ],
+          "module": "core.cognitive_endpoint",
+          "endpoint": "self_reflect"
+        },
+        {
+          "path": "/api/cognitive/reflection/summary",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_reflection_summary",
+          "tags": [
+            "cognitive"
+          ],
+          "module": "core.cognitive_endpoint",
+          "endpoint": "get_reflection_summary"
+        },
+        {
+          "path": "/api/cognitive/proactive/suggestions",
+          "methods": [
+            "POST"
+          ],
+          "name": "generate_proactive_suggestions",
+          "tags": [
+            "cognitive"
+          ],
+          "module": "core.cognitive_endpoint",
+          "endpoint": "generate_proactive_suggestions"
+        },
+        {
+          "path": "/api/cognitive/psychology/analyze",
+          "methods": [
+            "POST"
+          ],
+          "name": "analyze_emotional_state",
+          "tags": [
+            "cognitive"
+          ],
+          "module": "core.cognitive_endpoint",
+          "endpoint": "analyze_emotional_state"
+        },
+        {
+          "path": "/api/cognitive/psychology/state/{user_id}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_psychology_state",
+          "tags": [
+            "cognitive"
+          ],
+          "module": "core.cognitive_endpoint",
+          "endpoint": "get_psychology_state"
+        },
+        {
+          "path": "/api/cognitive/process",
+          "methods": [
+            "POST"
+          ],
+          "name": "cognitive_process",
+          "tags": [
+            "cognitive"
+          ],
+          "module": "core.cognitive_endpoint",
+          "endpoint": "cognitive_process"
+        },
+        {
+          "path": "/api/cognitive/nlp/analyze",
+          "methods": [
+            "POST"
+          ],
+          "name": "nlp_advanced_analysis",
+          "tags": [
+            "cognitive"
+          ],
+          "module": "core.cognitive_endpoint",
+          "endpoint": "nlp_advanced_analysis"
+        },
+        {
+          "path": "/api/cognitive/semantic/analyze",
+          "methods": [
+            "POST"
+          ],
+          "name": "semantic_analysis",
+          "tags": [
+            "cognitive"
+          ],
+          "module": "core.cognitive_endpoint",
+          "endpoint": "semantic_analysis"
+        },
+        {
+          "path": "/api/cognitive/tools/list",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_cognitive_tools",
+          "tags": [
+            "cognitive"
+          ],
+          "module": "core.cognitive_endpoint",
+          "endpoint": "list_cognitive_tools"
+        },
+        {
+          "path": "/api/cognitive/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "cognitive_status",
+          "tags": [
+            "cognitive"
+          ],
+          "module": "core.cognitive_endpoint",
+          "endpoint": "cognitive_status"
+        }
+      ]
+    },
+    "psyche": {
+      "name": "psyche",
+      "count": 5,
+      "routes": [
+        {
+          "path": "/api/psyche",
+          "methods": [
+            "POST"
+          ],
+          "name": "psyche_analyze",
+          "tags": [
+            "psyche"
+          ],
+          "module": "core.psyche_endpoint",
+          "endpoint": "psyche_analyze"
+        },
+        {
+          "path": "/api/psyche/state",
+          "methods": [
+            "GET"
+          ],
+          "name": "psyche_state",
+          "tags": [
+            "psyche"
+          ],
+          "module": "core.psyche_endpoint",
+          "endpoint": "psyche_state"
+        },
+        {
+          "path": "/api/psyche/state",
+          "methods": [
+            "POST"
+          ],
+          "name": "psyche_state_set",
+          "tags": [
+            "psyche"
+          ],
+          "module": "core.psyche_endpoint",
+          "endpoint": "psyche_state_set"
+        },
+        {
+          "path": "/api/psyche/reset",
+          "methods": [
+            "POST"
+          ],
+          "name": "psyche_reset",
+          "tags": [
+            "psyche"
+          ],
+          "module": "core.psyche_endpoint",
+          "endpoint": "psyche_reset"
+        },
+        {
+          "path": "/api/psyche/history",
+          "methods": [
+            "GET"
+          ],
+          "name": "psyche_history",
+          "tags": [
+            "psyche"
+          ],
+          "module": "core.psyche_endpoint",
+          "endpoint": "psyche_history"
+        }
+      ]
+    },
+    "suggestions": {
+      "name": "suggestions",
+      "count": 4,
+      "routes": [
+        {
+          "path": "/api/suggestions/generate",
+          "methods": [
+            "POST"
+          ],
+          "name": "generate_suggestions",
+          "tags": [
+            "Proactive Suggestions"
+          ],
+          "module": "core.suggestions_endpoint",
+          "endpoint": "generate_suggestions"
+        },
+        {
+          "path": "/api/suggestions/inject",
+          "methods": [
+            "POST"
+          ],
+          "name": "inject_suggestions",
+          "tags": [
+            "Proactive Suggestions"
+          ],
+          "module": "core.suggestions_endpoint",
+          "endpoint": "inject_suggestions"
+        },
+        {
+          "path": "/api/suggestions/stats",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_stats",
+          "tags": [
+            "Proactive Suggestions"
+          ],
+          "module": "core.suggestions_endpoint",
+          "endpoint": "get_stats"
+        },
+        {
+          "path": "/api/suggestions/analyze",
+          "methods": [
+            "POST"
+          ],
+          "name": "analyze_message",
+          "tags": [
+            "Proactive Suggestions"
+          ],
+          "module": "core.suggestions_endpoint",
+          "endpoint": "analyze_message"
+        }
+      ]
+    },
+    "fashion": {
+      "name": "fashion",
+      "count": 7,
+      "routes": [
+        {
+          "path": "/api/fashion/generate-outfit",
+          "methods": [
+            "POST"
+          ],
+          "name": "generate_outfit",
+          "tags": [
+            "AI Fashion"
+          ],
+          "module": "legacy_root_py.fashion_endpoint",
+          "endpoint": "generate_outfit"
+        },
+        {
+          "path": "/api/fashion/forecast-trends",
+          "methods": [
+            "POST"
+          ],
+          "name": "forecast_trends",
+          "tags": [
+            "AI Fashion"
+          ],
+          "module": "legacy_root_py.fashion_endpoint",
+          "endpoint": "forecast_trends"
+        },
+        {
+          "path": "/api/fashion/detect-brand",
+          "methods": [
+            "POST"
+          ],
+          "name": "detect_brand",
+          "tags": [
+            "AI Fashion"
+          ],
+          "module": "legacy_root_py.fashion_endpoint",
+          "endpoint": "detect_brand"
+        },
+        {
+          "path": "/api/fashion/categories",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_fashion_categories",
+          "tags": [
+            "AI Fashion"
+          ],
+          "module": "legacy_root_py.fashion_endpoint",
+          "endpoint": "get_fashion_categories"
+        },
+        {
+          "path": "/api/fashion/occasions",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_occasions",
+          "tags": [
+            "AI Fashion"
+          ],
+          "module": "legacy_root_py.fashion_endpoint",
+          "endpoint": "get_occasions"
+        },
+        {
+          "path": "/api/fashion/weather-types",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_weather_types",
+          "tags": [
+            "AI Fashion"
+          ],
+          "module": "legacy_root_py.fashion_endpoint",
+          "endpoint": "get_weather_types"
+        },
+        {
+          "path": "/api/fashion/stats",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_fashion_stats",
+          "tags": [
+            "AI Fashion"
+          ],
+          "module": "legacy_root_py.fashion_endpoint",
+          "endpoint": "get_fashion_stats"
+        }
+      ]
+    },
+    "ff": {
+      "name": "ff",
+      "count": 1,
+      "routes": [
+        {
+          "path": "/api/ff/proxy",
+          "methods": [
+            "POST"
+          ],
+          "name": "proxy",
+          "tags": [
+            "ff-proxy"
+          ],
+          "module": "legacy_root_py.ff_sidecar",
+          "endpoint": "proxy"
+        }
+      ]
+    },
+    "hacker": {
+      "name": "hacker",
+      "count": 6,
+      "routes": [
+        {
+          "path": "/api/hacker/scan/ports",
+          "methods": [
+            "POST"
+          ],
+          "name": "network_scan",
+          "tags": [
+            "AI Hacker Assistant"
+          ],
+          "module": "legacy_root_py.hacker_endpoint",
+          "endpoint": "network_scan"
+        },
+        {
+          "path": "/api/hacker/scan/vulnerabilities",
+          "methods": [
+            "POST"
+          ],
+          "name": "vulnerability_scanner",
+          "tags": [
+            "AI Hacker Assistant"
+          ],
+          "module": "legacy_root_py.hacker_endpoint",
+          "endpoint": "vulnerability_scanner"
+        },
+        {
+          "path": "/api/hacker/exploit/sqli",
+          "methods": [
+            "POST"
+          ],
+          "name": "sql_injection_scanner",
+          "tags": [
+            "AI Hacker Assistant"
+          ],
+          "module": "legacy_root_py.hacker_endpoint",
+          "endpoint": "sql_injection_scanner"
+        },
+        {
+          "path": "/api/hacker/recon/domain",
+          "methods": [
+            "POST"
+          ],
+          "name": "domain_reconnaissance",
+          "tags": [
+            "AI Hacker Assistant"
+          ],
+          "module": "legacy_root_py.hacker_endpoint",
+          "endpoint": "domain_reconnaissance"
+        },
+        {
+          "path": "/api/hacker/tools/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "hacker_tools_status",
+          "tags": [
+            "AI Hacker Assistant"
+          ],
+          "module": "legacy_root_py.hacker_endpoint",
+          "endpoint": "hacker_tools_status"
+        },
+        {
+          "path": "/api/hacker/exploits/list",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_exploit_modules",
+          "tags": [
+            "AI Hacker Assistant"
+          ],
+          "module": "legacy_root_py.hacker_endpoint",
+          "endpoint": "list_exploit_modules"
+        }
+      ]
+    },
+    "ml": {
+      "name": "ml",
+      "count": 5,
+      "routes": [
+        {
+          "path": "/api/ml/predict-suggestions",
+          "methods": [
+            "POST"
+          ],
+          "name": "predict_suggestions",
+          "tags": [
+            "Machine Learning"
+          ],
+          "module": "legacy_root_py.ml_endpoint",
+          "endpoint": "predict_suggestions"
+        },
+        {
+          "path": "/api/ml/record-feedback",
+          "methods": [
+            "POST"
+          ],
+          "name": "record_feedback",
+          "tags": [
+            "Machine Learning"
+          ],
+          "module": "legacy_root_py.ml_endpoint",
+          "endpoint": "record_feedback"
+        },
+        {
+          "path": "/api/ml/stats",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_stats",
+          "tags": [
+            "Machine Learning"
+          ],
+          "module": "legacy_root_py.ml_endpoint",
+          "endpoint": "get_stats"
+        },
+        {
+          "path": "/api/ml/model-info",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_model_info",
+          "tags": [
+            "Machine Learning"
+          ],
+          "module": "legacy_root_py.ml_endpoint",
+          "endpoint": "get_model_info"
+        },
+        {
+          "path": "/api/ml/retrain",
+          "methods": [
+            "POST"
+          ],
+          "name": "retrain_model",
+          "tags": [
+            "Machine Learning"
+          ],
+          "module": "legacy_root_py.ml_endpoint",
+          "endpoint": "retrain_model"
+        }
+      ]
+    },
+    "research": {
+      "name": "research",
+      "count": 4,
+      "routes": [
+        {
+          "path": "/api/research/search",
+          "methods": [
+            "POST"
+          ],
+          "name": "web_search",
+          "tags": [
+            "research"
+          ],
+          "module": "legacy_root_py.research_endpoint",
+          "endpoint": "web_search"
+        },
+        {
+          "path": "/api/research/autonauka",
+          "methods": [
+            "POST"
+          ],
+          "name": "run_autonauka",
+          "tags": [
+            "research"
+          ],
+          "module": "legacy_root_py.research_endpoint",
+          "endpoint": "run_autonauka"
+        },
+        {
+          "path": "/api/research/sources",
+          "methods": [
+            "GET"
+          ],
+          "name": "available_sources",
+          "tags": [
+            "research"
+          ],
+          "module": "legacy_root_py.research_endpoint",
+          "endpoint": "available_sources"
+        },
+        {
+          "path": "/api/research/test",
+          "methods": [
+            "GET"
+          ],
+          "name": "test_research",
+          "tags": [
+            "research"
+          ],
+          "module": "legacy_root_py.research_endpoint",
+          "endpoint": "test_research"
+        }
+      ]
+    },
+    "writer": {
+      "name": "writer",
+      "count": 13,
+      "routes": [
+        {
+          "path": "/api/writer/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_writer_status",
+          "tags": [
+            "writing"
+          ],
+          "module": "legacy_root_py.writer_pro",
+          "endpoint": "get_writer_status"
+        },
+        {
+          "path": "/api/writer/creative",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_creative_text",
+          "tags": [
+            "writing"
+          ],
+          "module": "legacy_root_py.writer_pro",
+          "endpoint": "create_creative_text"
+        },
+        {
+          "path": "/api/writer/product",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_product_description",
+          "tags": [
+            "writing"
+          ],
+          "module": "legacy_root_py.writer_pro",
+          "endpoint": "create_product_description"
+        },
+        {
+          "path": "/api/writer/social",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_social_media_post",
+          "tags": [
+            "writing"
+          ],
+          "module": "legacy_root_py.writer_pro",
+          "endpoint": "create_social_media_post"
+        },
+        {
+          "path": "/api/writer/auction/pro",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_auction_pro_description",
+          "tags": [
+            "writing"
+          ],
+          "module": "legacy_root_py.writer_pro",
+          "endpoint": "create_auction_pro_description"
+        },
+        {
+          "path": "/api/writer/article/masterpiece",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_masterpiece_article",
+          "tags": [
+            "writing"
+          ],
+          "module": "legacy_root_py.writer_pro",
+          "endpoint": "create_masterpiece_article"
+        },
+        {
+          "path": "/api/writer/sales/masterpiece",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_sales_masterpiece",
+          "tags": [
+            "writing"
+          ],
+          "module": "legacy_root_py.writer_pro",
+          "endpoint": "create_sales_masterpiece"
+        },
+        {
+          "path": "/api/writer/technical/masterpiece",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_technical_masterpiece",
+          "tags": [
+            "writing"
+          ],
+          "module": "legacy_root_py.writer_pro",
+          "endpoint": "create_technical_masterpiece"
+        },
+        {
+          "path": "/api/writer/fashion/analyze",
+          "methods": [
+            "POST"
+          ],
+          "name": "analyze_fashion_content",
+          "tags": [
+            "writing"
+          ],
+          "module": "legacy_root_py.writer_pro",
+          "endpoint": "analyze_fashion_content"
+        },
+        {
+          "path": "/api/writer/auction/tags",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_auction_tags",
+          "tags": [
+            "writing"
+          ],
+          "module": "legacy_root_py.writer_pro",
+          "endpoint": "get_auction_tags"
+        },
+        {
+          "path": "/api/writer/auction/knowledge",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_auction_knowledge",
+          "tags": [
+            "writing"
+          ],
+          "module": "legacy_root_py.writer_pro",
+          "endpoint": "get_auction_knowledge"
+        },
+        {
+          "path": "/api/writer/auction/learn",
+          "methods": [
+            "POST"
+          ],
+          "name": "learn_auction_knowledge",
+          "tags": [
+            "writing"
+          ],
+          "module": "legacy_root_py.writer_pro",
+          "endpoint": "learn_auction_knowledge"
+        },
+        {
+          "path": "/api/writer/templates",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_writing_templates",
+          "tags": [
+            "writing"
+          ],
+          "module": "legacy_root_py.writer_pro",
+          "endpoint": "get_writing_templates"
+        }
+      ]
+    }
+  }
+}
